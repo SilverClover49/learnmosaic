@@ -17,6 +17,10 @@ import ReactMarkdown from 'react-markdown'
 import AmbientBackground from '../components/visuals/AmbientBackground'
 import { api } from '../lib/api'
 
+function formatTime(date) {
+  return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+}
+
 function formatTimer(seconds) {
   const h = Math.floor(seconds / 3600)
   const m = Math.floor((seconds % 3600) / 60)
@@ -648,9 +652,9 @@ export default function Session() {
                       )}
                     </div>
                   </motion.div>
-                  {msg.timestamp && (
+                  {msg.created && (
                     <span className="text-[9px] font-semibold tracking-[0.1em] uppercase opacity-30 mt-1 px-1">
-                      {formatTime(new Date(msg.timestamp))}
+                      {formatTime(new Date(msg.created))}
                     </span>
                   )}
                 </div>
