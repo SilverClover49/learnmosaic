@@ -2,19 +2,15 @@ import { Router } from 'express'
 import multer from 'multer'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { promises as fs } from 'fs'
 import { callAI } from '../services/openrouter.js'
 import { generateImage } from '../services/imagegen.js'
-import { toolDefinitions, executeToolCalls } from '../services/tools.js'
+import { getSettings } from '../services/settings.js'
 import { pb } from '../services/pb.js'
+import { handleChat } from '../services/chat.js'
+import { loadPrompt } from '../services/prompts.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const promptsDir = path.join(__dirname, '..', 'prompts')
 const UPLOAD_DIR = path.join(__dirname, '..', '..', 'uploads')
-
-async function loadPrompt(name) {
-  return await fs.readFile(path.join(promptsDir, name), 'utf-8')
-}
 
 const upload = multer({ dest: UPLOAD_DIR })
 
@@ -56,6 +52,8 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   const { userId, name, age, interests, goal, timeframe, materials } = req.body
   if (!name || !age || !goal) return res.status(400).json({ error: 'Missing required fields' })
+  const ageNum = Number(age)
+  if (!Number.isInteger(ageNum) || ageNum < 1 || ageNum > 120) return res.status(400).json({ error: 'Age must be a number between 1 and 120' })
 
   const now = new Date().toISOString()
 
@@ -63,18 +61,20 @@ router.post('/', async (req, res) => {
   const curriculumPrompt = await loadPrompt('curriculum.md')
   const curriculumSystem = curriculumPrompt
     .replace('{name}', name)
-    .replace('{age}', String(age))
+    .replace('{age}', String(ageNum))
     .replace('{interests}', (interests || []).join(', '))
     .replace('{goal}', goal)
     .replace('{timeframe}', timeframe || 'flexible')
 
+  const settings = await getSettings()
   let curriculum = ''
   try {
-    curriculum = await callAI({
+    const result = await callAI({
       system: curriculumSystem,
       messages: [{ role: 'user', content: `Generate a personalized curriculum for ${name} to achieve: ${goal}` }],
-      sessionId: 'new'
+      settings
     })
+    curriculum = result.content || ''
   } catch (e) {
     curriculum = `# Curriculum: ${goal}\n\n*Curriculum generation unavailable.*`
   }
@@ -87,11 +87,12 @@ router.post('/', async (req, res) => {
 
   let checklist = ''
   try {
-    checklist = await callAI({
+    const result = await callAI({
       system: checklistSystem,
       messages: [{ role: 'user', content: `Generate a checklist for achieving: ${goal}` }],
-      sessionId: 'new'
+      settings
     })
+    checklist = result.content || ''
   } catch (e) {
     checklist = `# Checklist: ${goal}\n\n- [ ] ${goal}`
   }
@@ -101,7 +102,7 @@ router.post('/', async (req, res) => {
   // Save to PocketBase
   const session = await pb.createSession({
     profileId: userId || 'anon',
-    name, age: Number(age),
+    name, age: ageNum,
     interests: interests || [],
     goal, timeframe: timeframe || 'flexible',
     status: 'active',
@@ -119,155 +120,16 @@ router.post('/', async (req, res) => {
   res.json({ id: session.id, ...session })
 })
 
-// Chat with AI tutor (tool-based agent)
-router.post('/:id/chat', async (req, res) => {
-  const { message, history, currentTime, sessionDuration } = req.body
-  let meta
-  try { meta = await pb.getSession(req.params.id) } catch {}
-  if (!meta) return res.status(404).json({ error: 'Session not found' })
-
-  const now = currentTime ? new Date(currentTime) : new Date()
-  const hours = now.getHours()
-  let timeOfDay = hours >= 5 && hours < 12 ? 'morning' : hours >= 12 && hours < 17 ? 'afternoon' : hours >= 17 && hours < 21 ? 'evening' : 'night'
-
-  const formatDuration = (secs) => {
-    if (secs < 60) return `${secs}s`
-    const m = Math.floor(secs / 60)
-    const s = secs % 60
-    if (m < 60) return `${m}m${s > 0 ? ` ${s}s` : ''}`
-    return `${Math.floor(m / 60)}h${m % 60 > 0 ? ` ${m % 60}m` : ''}`
-  }
-
-  const tutorPrompt = await loadPrompt('tutor.md')
-  const toolsPrompt = await loadPrompt('tools.md')
-  const system = tutorPrompt + '\n\n' + toolsPrompt
-    .replace(/{name}/g, meta.name)
-    .replace(/{age}/g, meta.age)
-    .replace(/{interests}/g, (meta.interests || []).join(', '))
-    .replace(/{goal}/g, meta.goal)
-    .replace(/{timeframe}/g, meta.timeframe || 'flexible')
-    .replace(/{curriculum_summary}/g, (meta.curriculum || '').slice(0, 800))
-    .replace(/{checklist}/g, meta.checklist || '')
-    .replace(/{current_date_time}/g, now.toLocaleString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }))
-    .replace(/{time_of_day}/g, timeOfDay)
-    .replace(/{session_duration}/g, formatDuration(sessionDuration || 0))
-    .replace(/{message_time}/g, now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }))
-
-  const aiMessages = (history || []).concat([{ role: 'user', content: message }])
-
-  try {
-    // First AI call — with tools
-    const firstReply = await callAI({
-      system,
-      messages: aiMessages,
-      tools: toolDefinitions,
-      sessionId: req.params.id
-    })
-
-    let finalText = firstReply.content || ''
-    let blocks = []
-
-    // If AI wants to use tools
-    if (firstReply.tool_calls && firstReply.tool_calls.length > 0) {
-      const toolResults = await executeToolCalls(firstReply.tool_calls)
-
-      // Collect blocks from tool results
-      blocks = toolResults.filter(r => r.block).map(r => r.block)
-
-      // Build tool result messages
-      const toolMessages = [
-        ...aiMessages,
-        { role: 'assistant', content: null, tool_calls: firstReply.tool_calls },
-        ...toolResults.map(r => ({
-          role: 'tool',
-          content: r.content,
-          tool_call_id: r.tool_call_id
-        }))
-      ]
-
-      // Second AI call — with tool results
-      const secondReply = await callAI({
-        system,
-        messages: toolMessages,
-        sessionId: req.params.id
-      })
-
-      finalText = (secondReply.content || '').replace(/\[MILESTONE:[^\]]*\]/g, '').trim()
-
-      // Check for tool calls in second reply too (allow chaining)
-      if (secondReply.tool_calls && secondReply.tool_calls.length > 0) {
-        const moreResults = await executeToolCalls(secondReply.tool_calls)
-        blocks = blocks.concat(moreResults.filter(r => r.block).map(r => r.block))
-
-        const moreMessages = [
-          ...toolMessages,
-          { role: 'assistant', content: null, tool_calls: secondReply.tool_calls },
-          ...moreResults.map(r => ({
-            role: 'tool',
-            content: r.content,
-            tool_call_id: r.tool_call_id
-          }))
-        ]
-
-        const thirdReply = await callAI({
-          system,
-          messages: moreMessages,
-          sessionId: req.params.id
-        })
-        finalText = (thirdReply.content || '').replace(/\[MILESTONE:[^\]]*\]/g, '').trim()
-      }
-    } else {
-      finalText = finalText.replace(/\[MILESTONE:[^\]]*\]/g, '').trim()
-    }
-
-    // Persist both messages
-    await pb.createMessage({ sessionId: req.params.id, role: 'user', content: message })
-    await pb.createMessage({ sessionId: req.params.id, role: 'assistant', content: finalText, blocks })
-
-    // Check for milestones
-    const milestoneMatch = finalText.match(/\[MILESTONE:\s*(.*?)\]/) || (firstReply.content || '').match(/\[MILESTONE:\s*(.*?)\]/)
-    if (milestoneMatch) {
-      await pb.addMilestone({ sessionId: req.params.id, type: 'achievement', description: milestoneMatch[1].trim() })
-    }
-
-    // Append to thinking board
-    const boardEntry = `\n## ${now.toLocaleString()}\n\n**Student**: ${message.slice(0, 200)}\n\n**Tutor**: ${finalText.slice(0, 300)}...\n\n---\n`
-    const updatedBoard = (meta.thinkingBoard || '') + boardEntry
-    const newCount = (meta.chatCount || 0) + 1
-
-    // Every 5 messages, summarize the thinking board
-    let boardSummary = ''
-    if (newCount > 0 && newCount % 5 === 0) {
-      try {
-        const summaryPrompt = await loadPrompt('summarize.md')
-        boardSummary = await callAI({
-          system: summaryPrompt,
-          messages: [{ role: 'user', content: updatedBoard.slice(-3000) }],
-          sessionId: req.params.id
-        })
-        await pb.updateSession(req.params.id, {
-          thinkingBoard: `# Thinking Board (Summarized)\n\n${boardSummary}\n\n---\n${boardEntry}`,
-          chatCount: newCount
-        })
-      } catch {
-        await pb.updateSession(req.params.id, { thinkingBoard: updatedBoard, chatCount: newCount })
-      }
-    } else {
-      await pb.updateSession(req.params.id, { thinkingBoard: updatedBoard, chatCount: newCount })
-    }
-
-    res.json({ reply: finalText, blocks })
-  } catch (e) {
-    res.status(500).json({ error: e.message })
-  }
-})
+// Chat with AI tutor — delegated to chat service
+router.post('/:id/chat', handleChat)
 
 // Generate image
 router.post('/:id/generate-image', async (req, res) => {
   const { prompt } = req.body
   if (!prompt) return res.status(400).json({ error: 'Prompt required' })
   try {
-    const url = await generateImage(prompt)
+    const settings = await getSettings()
+    const url = await generateImage(prompt, settings)
     if (!url) return res.status(503).json({ error: 'Image generation unavailable' })
     res.json({ url })
   } catch (e) {
@@ -301,11 +163,12 @@ router.post('/:id/complete', async (req, res) => {
       const messages = await pb.getMessages(req.params.id)
       const chatLog = messages.map(m => `${m.role}: ${m.content.slice(0, 200)}`).join('\n')
       const reviewPrompt = `Based on this learning session about "${meta.goal}" for ${meta.name}, generate 3-5 review questions and answers. Format each as:\n\nQ: [question]\nA: [answer]\n\nCurriculum covered:\n${(meta.curriculum || '').slice(0, 1500)}\n\nChat log:\n${chatLog.slice(0, 2000)}`
-      reviewCards = await callAI({
+      const result = await callAI({
         system: 'You generate concise review cards from learning sessions. Output plain Q&A pairs.',
         messages: [{ role: 'user', content: reviewPrompt }],
-        sessionId: req.params.id
+        settings: await getSettings()
       })
+      reviewCards = result.content || ''
     } catch {
       reviewCards = ''
     }
@@ -347,10 +210,12 @@ router.patch('/:id', async (req, res) => {
     const meta = await pb.getSession(req.params.id)
     if (!meta) return res.status(404).json({ error: 'Session not found' })
     const updates = {}
+    if (req.body.name) updates.name = req.body.name
     if (req.body.goal) updates.goal = req.body.goal
     if (req.body.favorite !== undefined) updates.favorite = req.body.favorite
     await pb.updateSession(req.params.id, updates)
-    res.json({ success: true })
+    const updated = await pb.getSession(req.params.id)
+    res.json(updated)
   } catch (e) {
     res.status(500).json({ error: e.message })
   }

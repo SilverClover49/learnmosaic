@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
+import DOMPurify from 'dompurify'
 
 export default function ArtifactRenderer({ language, code, imageUrl }) {
   const [copied, setCopied] = useState(false)
@@ -56,11 +57,11 @@ export default function ArtifactRenderer({ language, code, imageUrl }) {
             <div className="p-4 flex justify-center"
               style={{ minHeight: 100 }}
               dangerouslySetInnerHTML={{
-                __html: code.replace('<svg', '<svg style="max-width:100%;height:auto;max-height:60vh"')
+                __html: DOMPurify.sanitize(code.replace('<svg', '<svg style="max-width:100%;height:auto;max-height:60vh"'))
               }}
             />
           ) : isVisual ? (
-            <div className="p-4" dangerouslySetInnerHTML={{ __html: code }} />
+            <div className="p-4" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(code) }} />
           ) : isDiagram ? (
             <pre className="p-4 text-sm font-mono leading-relaxed whitespace-pre-wrap" style={{ color: 'var(--accent2)' }}>
               {code}

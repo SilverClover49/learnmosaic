@@ -11,7 +11,7 @@ export default function Board_() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    api.getSession(id).then(d => { setContent(d.board || ''); setLoading(false) }).catch(() => setLoading(false))
+    api.getSession(id).then(d => { setContent(d.thinkingBoard || ''); setLoading(false) }).catch(() => setLoading(false))
   }, [id])
 
   return (

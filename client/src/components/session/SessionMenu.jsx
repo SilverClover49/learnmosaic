@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 export default function SessionMenu({ session, onDelete, onRename, onToggleFavorite }) {
   const [open, setOpen] = useState(false)
   const [renaming, setRenaming] = useState(false)
-  const [newName, setNewName] = useState(session.goal || '')
+  const [newName, setNewName] = useState(session.name || '')
   const ref = useRef(null)
   const inputRef = useRef(null)
 
@@ -22,7 +22,7 @@ export default function SessionMenu({ session, onDelete, onRename, onToggleFavor
   }, [renaming])
 
   const handleRename = () => {
-    if (newName.trim() && newName !== session.goal) {
+    if (newName.trim() && newName !== session.name) {
       onRename(session.id, newName.trim())
     }
     setRenaming(false)
@@ -116,7 +116,7 @@ export default function SessionMenu({ session, onDelete, onRename, onToggleFavor
                 >SAVE</button>
                 <button
                   className="flex-1 py-2 text-[10px] uppercase tracking-wider border-[2px] border-[var(--bauhaus-black)] cursor-pointer hover:bg-gray-100 transition-colors"
-                  onClick={() => { setRenaming(false); setNewName(session.goal); setOpen(false) }}
+                  onClick={() => { setRenaming(false); setNewName(session.name); setOpen(false) }}
                 >CANCEL</button>
               </div>
             </div>

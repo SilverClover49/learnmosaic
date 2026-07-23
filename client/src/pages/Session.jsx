@@ -8,14 +8,14 @@ import { toast } from '../components/ui/Toast'
 import FileUploader from '../components/session/FileUploader'
 import ArtifactRenderer from '../components/session/ArtifactRenderer'
 import SelectionToolbar from '../components/session/SelectionToolbar'
+import ReferencePanel from '../components/session/ReferencePanel'
+import CodeSandbox from '../components/session/CodeSandbox'
+import Timer from '../components/session/Timer'
+import PresentationViewer from '../components/session/PresentationViewer'
 import ColorPicker from '../components/visuals/ColorPicker'
 import ReactMarkdown from 'react-markdown'
 import AmbientBackground from '../components/visuals/AmbientBackground'
 import { api } from '../lib/api'
-
-function formatTime(date) {
-  return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
-}
 
 function formatTimer(seconds) {
   const h = Math.floor(seconds / 3600)
@@ -23,6 +23,64 @@ function formatTimer(seconds) {
   const s = seconds % 60
   if (h > 0) return `${h}h ${String(m).padStart(2, '0')}m`
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+}
+
+function ChecklistPanel({ checklist, sessionId }) {
+  const [checked, setChecked] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(`checklist-${sessionId}`) || '[]') } catch { return [] }
+  })
+  const items = checklist.split('\n').reduce((acc, line) => {
+    const match = line.match(/^-\s\[.\]\s(.+)/)
+    if (match) acc.push({ text: match[1], index: acc.length })
+    return acc
+  }, [])
+
+  const toggleItem = (idx) => {
+    setChecked(prev => {
+      const next = prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]
+      localStorage.setItem(`checklist-${sessionId}`, JSON.stringify(next))
+      return next
+    })
+  }
+
+  if (items.length === 0) {
+    return <div className="flex items-center justify-center h-full text-[var(--ink-muted)] text-sm">No checklist items yet.</div>
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="text-xs uppercase tracking-wider text-[var(--ink-muted)] mb-4 font-bold">YOUR PROGRESS</div>
+      {items.map((item) => (
+        <motion.div
+          key={item.index}
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
+          className="p-[2px] rounded-[var(--radius-md)] cursor-pointer transition-all duration-300"
+          style={checked.includes(item.index) ? { background: 'var(--accent2)' } : { background: 'var(--glass-border)' }}
+          onClick={() => toggleItem(item.index)}
+        >
+          <div className="rounded-[calc(var(--radius-md)-2px)] px-4 py-3 flex items-center gap-3"
+            style={{ backgroundColor: 'var(--surface)', boxShadow: 'var(--shadow-inner)' }}>
+            <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-all duration-300
+              ${checked.includes(item.index) ? 'border-[var(--accent2)] bg-[var(--accent2)]' : 'border-[var(--ink-dim)]'}`}>
+              {checked.includes(item.index) && (
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              )}
+            </div>
+            <span className={`text-sm ${checked.includes(item.index) ? 'line-through text-[var(--ink-muted)]' : 'text-[var(--ink)]'}`}>
+              {item.text}
+            </span>
+          </div>
+        </motion.div>
+      ))}
+      <div className="text-[10px] text-[var(--ink-muted)] text-center pt-2">
+        {checked.length}/{items.length} completed
+      </div>
+    </div>
+  )
 }
 
 export default function Session() {
@@ -38,18 +96,12 @@ export default function Session() {
   const [showCompleteModal, setShowCompleteModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [navOpen, setNavOpen] = useState(false)
-  const [clock, setClock] = useState(new Date())
   const [sessionSeconds, setSessionSeconds] = useState(0)
   const [sessionStarted, setSessionStarted] = useState(null)
   const [showPicker, setShowPicker] = useState(false)
+  const [references, setReferences] = useState([])
   const chatEnd = useRef(null)
   const chatContainerRef = useRef(null)
-
-  // Real-world clock — ticks every second
-  useEffect(() => {
-    const interval = setInterval(() => setClock(new Date()), 1000)
-    return () => clearInterval(interval)
-  }, [])
 
   // Session timer — counts up from first message
   useEffect(() => {
@@ -69,20 +121,35 @@ export default function Session() {
       setSession(data)
       if (data.chatHistory?.length > 0) {
         setChat(data.chatHistory)
-        setSessionStarted(new Date(data.chatHistory[0].timestamp).getTime())
+        if (data.chatHistory[0].created) {
+          setSessionStarted(new Date(data.chatHistory[0].created).getTime())
+        }
       }
-    } catch {}
+    } catch (e) {
+      console.warn('Failed to load session:', e)
+    }
     setLoading(false)
   }
 
-  const handleAskDoubt = (selectedText) => {
-    setInput(`"${selectedText}"\n\nIn reference to this, `)
-    // Focus the input
+  const handleReference = (text) => {
+    setReferences(prev => [...prev, text])
+    setTimeout(() => {
+      const inputEl = document.querySelector('input, textarea')
+      if (inputEl) inputEl.focus()
+    }, 100)
+  }
+
+  const handleRemoveReference = (index) => {
+    if (index === -1) { setReferences([]); return }
+    setReferences(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleAskDoubtAboutReference = (refText) => {
+    setInput(`About "${refText.slice(0, 100)}": `)
     setTimeout(() => {
       const inputEl = document.querySelector('input, textarea')
       if (inputEl) {
         inputEl.focus()
-        // Place cursor at the end
         const len = inputEl.value.length
         inputEl.setSelectionRange(len, len)
       }
@@ -91,30 +158,60 @@ export default function Session() {
 
   const sendMessage = async () => {
     if (!input.trim() || sending) return
-    const msg = input.trim()
+    let msg = input.trim()
+    if (references.length > 0) {
+      const refContext = references.slice(0, 5).map((r, i) => `[Ref ${i + 1}]: ${r.slice(0, 200)}`).join('\n')
+      msg = `${refContext}\n\n---\n\n${msg}`
+    }
     setInput('')
+    setReferences([])
     const now = new Date()
     if (!sessionStarted) setSessionStarted(now.getTime())
-    setChat(prev => [...prev, { role: 'user', content: msg, timestamp: now.toISOString() }])
+    const assistantId = `ast-${Date.now()}`
+    setChat(prev => [...prev,
+      { role: 'user', content: msg, timestamp: now.toISOString(), _id: `usr-${Date.now()}` },
+      { role: 'assistant', content: '', blocks: [], _id: assistantId, streaming: true }
+    ])
     setSending(true)
+    let accumulatedText = ''
     try {
-      const data = await api.sendMessage(id, {
+      await api.sendMessageStream(id, {
         message: msg,
         history: chat.map(c => ({ role: c.role, content: c.content })),
         currentTime: new Date().toISOString(),
         sessionDuration: sessionStarted ? Math.floor((Date.now() - sessionStarted) / 1000) : 0
+      }, {
+        onToken: (text) => {
+          accumulatedText += text
+          setChat(prev => prev.map(c =>
+            c._id === assistantId ? { ...c, content: accumulatedText } : c
+          ))
+        },
+        onBlocks: (blocks) => {
+          setChat(prev => prev.map(c =>
+            c._id === assistantId ? { ...c, blocks } : c
+          ))
+        },
+        onDone: () => {
+          setChat(prev => prev.map(c =>
+            c._id === assistantId ? { ...c, timestamp: new Date().toISOString(), streaming: false } : c
+          ))
+          setSending(false)
+          loadSession()
+        },
+        onError: () => {
+          setChat(prev => prev.map(c =>
+            c._id === assistantId ? { ...c, content: accumulatedText || 'Sorry, I had trouble responding. Try again?', streaming: false } : c
+          ))
+          setSending(false)
+        }
       })
-      setChat(prev => [...prev, {
-        role: 'assistant',
-        content: data.reply,
-        blocks: data.blocks || [],
-        timestamp: new Date().toISOString()
-      }])
-      if (data.milestones) setSession(prev => ({ ...prev, milestones: data.milestones }))
     } catch {
-      setChat(prev => [...prev, { role: 'assistant', content: 'Sorry, I had trouble responding. Try again?', timestamp: new Date().toISOString() }])
+      setChat(prev => prev.map(c =>
+        c._id === assistantId ? { ...c, content: accumulatedText || 'Sorry, I had trouble responding. Try again?', streaming: false } : c
+      ))
+      setSending(false)
     }
-    setSending(false)
   }
 
   const handleKeyDown = (e) => {
@@ -162,7 +259,12 @@ export default function Session() {
           if (part.startsWith('```')) {
             const match = part.match(/```(\w*)\n([\s\S]*?)```/)
             if (match) {
-              return <ArtifactRenderer key={i} language={match[1] || 'text'} code={match[2]} />
+              const lang = match[1] || 'text'
+              const code = match[2]
+              if (lang === 'html' || lang === 'sandbox') {
+                return <CodeSandbox key={i} html={code} title="Interactive Example" />
+              }
+              return <ArtifactRenderer key={i} language={lang} code={code} />
             }
           }
           const isUser = role === 'user'
@@ -186,10 +288,57 @@ export default function Session() {
             )}
             {block.type === 'image' && (
               <div className="border-[3px] border-[var(--bauhaus-black)] overflow-hidden">
-                <img src={block.url} alt={block.prompt || 'Generated image'} className="w-full h-auto max-h-[60vh] object-contain" />
+                <img src={block.url} alt={block.prompt || ''} className="w-full h-auto max-h-[60vh] object-contain" />
               </div>
             )}
-            {block.type === 'search' && block.data && block.data.results && (
+            {block.type === 'sandbox' && (
+              <CodeSandbox html={block.html} title={block.title} />
+            )}
+            {block.type === 'presentation' && (
+              <PresentationViewer title={block.title} slides={block.slides} />
+            )}
+            {block.type === 'download' && (
+              <div className="border-[2px] border-[var(--bauhaus-black)] p-4 bg-[var(--surface-alt)]">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs font-bold uppercase tracking-wider">{block.filename}</div>
+                    <div className="text-[10px] text-[var(--ink-muted)] mt-1">{block.description}</div>
+                  </div>
+                  <a
+                    href={`data:text/plain;base64,${block.base64}`}
+                    download={block.filename}
+                    className="px-3 py-1.5 bg-[var(--bauhaus-red)] text-white text-[10px] font-bold uppercase tracking-wider hover:brightness-110 transition-all cursor-pointer"
+                  >
+                    Download
+                  </a>
+                </div>
+              </div>
+            )}
+            {block.type === 'artifact' && block.data && (
+              <div className="border-[2px] border-[var(--bauhaus-black)] overflow-hidden">
+                <div className="flex items-center justify-between px-3 py-1.5 bg-[var(--bauhaus-black)] text-white">
+                  <span className="text-xs font-bold uppercase tracking-wider">{block.data.name}</span>
+                  <span className="text-[9px] uppercase text-white/70">{block.data.type}</span>
+                </div>
+                <div className="p-3 bg-[var(--surface)] max-h-[300px] overflow-y-auto">
+                  <pre className="text-[11px] whitespace-pre-wrap font-mono text-[var(--ink)]">{block.data.content}</pre>
+                </div>
+              </div>
+            )}
+            {block.type === 'memories' && block.data && block.data.length > 0 && (
+              <div className="border-[2px] border-[var(--bauhaus-black)] p-3 bg-[var(--surface-alt)]">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--ink-muted)] mb-2">Stored Facts</div>
+                <div className="space-y-1">
+                  {block.data.map((m, j) => (
+                    <div key={j} className="text-[11px] flex items-start gap-2">
+                      <span className="font-bold text-[var(--bauhaus-red)] whitespace-nowrap">{m.key}:</span>
+                      <span className="text-[var(--ink)]">{m.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {block.type === 'search' && block.data?.results && (
               <div className="border-[2px] border-[var(--bauhaus-black)] p-4 bg-[var(--surface-alt)]">
                 <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--ink-muted)] mb-3">Search Results</div>
                 {block.data.abstract && (
@@ -261,9 +410,9 @@ export default function Session() {
   }
 
   return (
-    <PageTransition className="min-h-[100dvh] flex flex-col relative">
+    <PageTransition className="h-[100dvh] overflow-hidden flex flex-col relative">
       <AmbientBackground variant="subtle" />
-      <div className="color-dna-strip z-10 relative">
+      <div className="color-dna-strip z-10 relative flex-shrink-0">
         <div /><div /><div /><div /><div />
       </div>
 
@@ -296,7 +445,7 @@ export default function Session() {
       </Modal>
 
       {/* Top Navigation Bar */}
-      <div className="bg-[var(--bauhaus-black)] text-[var(--bauhaus-white)] px-6 py-3 flex items-center justify-between relative z-20">
+      <div className="bg-[var(--bauhaus-black)] text-[var(--bauhaus-white)] px-6 py-3 flex items-center justify-between relative z-20 flex-shrink-0">
         <div className="flex items-center gap-4">
           <motion.button
             whileHover={{ x: -3 }}
@@ -319,13 +468,7 @@ export default function Session() {
               <span className="text-xs font-mono tracking-wider text-[var(--bauhaus-yellow)]">{formatTimer(sessionSeconds)}</span>
             </div>
           )}
-          {/* Real-World Clock */}
-          <div className="flex items-center gap-2 px-3 py-1 border border-white/20">
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-              <rect x="1" y="1" width="8" height="8" stroke="var(--bauhaus-blue)" strokeWidth="1.5"/>
-            </svg>
-            <span className="text-xs font-mono tracking-wider">{formatTime(clock)}</span>
-          </div>
+          <Timer />
           <motion.button
             whileHover={{ rotate: 90 }}
             onClick={() => setShowPicker(!showPicker)}
@@ -404,10 +547,10 @@ export default function Session() {
       </AnimatePresence>
 
       {/* Main chat area */}
-      <div className="flex-1 flex relative z-10">
-        <div className="flex-1 flex flex-col">
-          <div ref={chatContainerRef} className="flex-1 overflow-y-auto px-6 py-8 space-y-5 relative">
-            <SelectionToolbar containerRef={chatContainerRef} onAskDoubt={handleAskDoubt} />
+      <div className="flex-1 min-h-0 flex relative z-10">
+        <div className="flex-1 min-h-0 flex flex-col">
+          <div ref={chatContainerRef} className="flex-1 min-h-0 overflow-y-auto px-6 py-8 space-y-5 relative">
+            <SelectionToolbar containerRef={chatContainerRef} onReference={handleReference} />
             {chat.length === 0 && (
               <motion.div
                 initial={{ opacity: 0, y: 30, filter: 'blur(6px)' }}
@@ -452,14 +595,13 @@ export default function Session() {
             )}
             {chat.map((msg, i) => (
               <motion.div
-                key={i}
+                key={msg._id || i}
                 initial={{ opacity: 0, y: 15, filter: 'blur(3px)' }}
                 animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                 transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
                 className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div className={`max-w-[80%] md:max-w-[65%] ${msg.role === 'user' ? 'flex flex-col items-end' : 'flex flex-col items-start'}`}>
-                  {/* Sender label with Kandinsky shape */}
                   <div className="flex items-center gap-2 mb-1.5 px-1">
                     {msg.role === 'assistant' && (
                       <div className="w-3 h-3 bg-[var(--bauhaus-red)] flex-shrink-0" />
@@ -471,7 +613,6 @@ export default function Session() {
                       <div className="w-3 h-3 rounded-full bg-[var(--bauhaus-blue)] flex-shrink-0" />
                     )}
                   </div>
-                  {/* Message bubble */}
                   <motion.div
                     whileHover={{ scale: 1.005 }}
                     className={`${
@@ -481,10 +622,32 @@ export default function Session() {
                     }`}
                   >
                     <div className="px-5 py-3">
-                      {renderMessage(msg.content, msg.role, msg.blocks)}
+                      {msg.streaming && !msg.content ? (
+                        <div className="flex gap-3 items-center py-1">
+                          <motion.div animate={{ scale: [1, 1.4, 1] }} transition={{ duration: 0.8, repeat: Infinity, delay: 0 }}>
+                            <div className="w-2.5 h-2.5 bg-[var(--bauhaus-red)]" />
+                          </motion.div>
+                          <motion.div animate={{ scale: [1, 1.4, 1] }} transition={{ duration: 0.8, repeat: Infinity, delay: 0.2 }}>
+                            <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-b-[8px] border-b-[var(--bauhaus-yellow)]" />
+                          </motion.div>
+                          <motion.div animate={{ scale: [1, 1.4, 1] }} transition={{ duration: 0.8, repeat: Infinity, delay: 0.4 }}>
+                            <div className="w-2.5 h-2.5 rounded-full bg-[var(--bauhaus-blue)]" />
+                          </motion.div>
+                        </div>
+                      ) : (
+                        <>
+                          {renderMessage(msg.content, msg.role, msg.blocks)}
+                          {msg.streaming && (
+                            <motion.span
+                              animate={{ opacity: [1, 0] }}
+                              transition={{ duration: 0.5, repeat: Infinity }}
+                              className="inline-block w-[2px] h-[1em] bg-[var(--bauhaus-red)] ml-0.5 align-middle"
+                            />
+                          )}
+                        </>
+                      )}
                     </div>
                   </motion.div>
-                  {/* Timestamp */}
                   {msg.timestamp && (
                     <span className="text-[9px] font-semibold tracking-[0.1em] uppercase opacity-30 mt-1 px-1">
                       {formatTime(new Date(msg.timestamp))}
@@ -493,40 +656,18 @@ export default function Session() {
                 </div>
               </motion.div>
             ))}
-            {sending && (
-              <div className="flex justify-start">
-                <div className="flex flex-col items-start">
-                  <div className="flex items-center gap-2 mb-1.5 px-1">
-                    <div className="w-3 h-3 bg-[var(--bauhaus-red)] flex-shrink-0" />
-                    <span className="text-[10px] font-bold uppercase tracking-[0.15em] opacity-50">MentorMind</span>
-                  </div>
-                  <div className="bg-[var(--bauhaus-white)] border-[3px] border-[var(--bauhaus-red)] px-5 py-3 rounded-tl-[4px] rounded-tr-[20px] rounded-b-[20px]">
-                    <div className="flex gap-3 items-center">
-                      <motion.div
-                        animate={{ scale: [1, 1.4, 1] }}
-                        transition={{ duration: 0.8, repeat: Infinity, delay: 0 }}
-                        className="w-2.5 h-2.5 bg-[var(--bauhaus-red)]"
-                      />
-                      <motion.div
-                        animate={{ scale: [1, 1.4, 1] }}
-                        transition={{ duration: 0.8, repeat: Infinity, delay: 0.2 }}
-                        className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-b-[8px] border-b-[var(--bauhaus-yellow)]"
-                      />
-                      <motion.div
-                        animate={{ scale: [1, 1.4, 1] }}
-                        transition={{ duration: 0.8, repeat: Infinity, delay: 0.4 }}
-                        className="w-2.5 h-2.5 rounded-full bg-[var(--bauhaus-blue)]"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
             <div ref={chatEnd} />
           </div>
 
+          {/* Reference Panel */}
+          <ReferencePanel
+            references={references}
+            onRemove={handleRemoveReference}
+            onAskDoubt={handleAskDoubtAboutReference}
+          />
+
           {/* Input bar */}
-          <div className="border-t-[4px] border-[var(--bauhaus-black)] px-6 py-4 bg-[var(--surface)]/80 backdrop-blur-sm relative z-10">
+          <div className="border-t-[4px] border-[var(--bauhaus-black)] px-6 py-4 bg-[var(--surface)]/80 backdrop-blur-sm relative z-10 flex-shrink-0">
             <div className="w-full max-w-3xl mx-auto flex gap-3">
               <FileUploader sessionId={id} />
               <motion.input
@@ -559,7 +700,7 @@ export default function Session() {
               animate={{ width: 320, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-              className="border-l-[4px] border-[var(--bauhaus-black)] bg-[var(--surface)]/90 backdrop-blur-sm flex flex-col overflow-hidden"
+              className="border-l-[4px] border-[var(--bauhaus-black)] bg-[var(--surface)]/90 backdrop-blur-sm flex flex-col min-w-0"
             >
               <div className="flex border-b-[4px] border-[var(--bauhaus-black)] min-w-[320px]">
                 {[
@@ -578,7 +719,7 @@ export default function Session() {
                   </motion.button>
                 ))}
               </div>
-              <div className="flex-1 overflow-y-auto p-5 text-sm leading-relaxed whitespace-pre-wrap min-w-[320px]">
+              <div className="flex-1 min-h-0 overflow-y-auto p-5 min-w-[320px]">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={tab}
@@ -586,10 +727,53 @@ export default function Session() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -10 }}
                     transition={{ duration: 0.2 }}
+                    className="h-full"
                   >
-                    {tab === 'curriculum' && (session.curriculum || 'Curriculum being generated...')}
-                    {tab === 'board' && (session.board || 'Thinking board...')}
-                    {tab === 'checklist' && (session.checklist || 'Checklist being generated...')}
+                    {tab === 'curriculum' && (
+                      session.curriculum ? (
+                        <div className="p-[2px] rounded-[var(--radius-lg)]" style={{ background: 'var(--glass-border)' }}>
+                          <div className="rounded-[calc(var(--radius-lg)-2px)] p-5" style={{ backgroundColor: 'var(--surface)', boxShadow: 'var(--shadow-inner)' }}>
+                            <div className="text-xs uppercase tracking-wider text-[var(--ink-muted)] mb-4 font-bold">LEARNING PATH</div>
+                            <div className="prose prose-invert max-w-none text-sm leading-relaxed" style={{
+                              '--tw-prose-body': 'var(--ink)',
+                              '--tw-prose-headings': 'var(--ink)',
+                              '--tw-prose-bold': 'var(--ink)',
+                              '--tw-prose-links': 'var(--accent2)',
+                            }}>
+                              <ReactMarkdown>{session.curriculum}</ReactMarkdown>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-[var(--ink-muted)] text-sm">Curriculum being generated...</div>
+                      )
+                    )}
+                    {tab === 'board' && (
+                      session.thinkingBoard ? (
+                        <div className="p-[2px] rounded-[var(--radius-lg)]" style={{ background: 'var(--glass-border)' }}>
+                          <div className="rounded-[calc(var(--radius-lg)-2px)] p-5" style={{ backgroundColor: 'var(--surface)', boxShadow: 'var(--shadow-inner)' }}>
+                            <div className="text-xs uppercase tracking-wider text-[var(--ink-muted)] mb-4 font-bold">BEHIND THE SCENES</div>
+                            <div className="prose prose-invert max-w-none text-sm leading-relaxed whitespace-pre-wrap" style={{
+                              '--tw-prose-body': 'var(--ink)',
+                              '--tw-prose-headings': 'var(--ink)',
+                              '--tw-prose-bold': 'var(--ink)',
+                              '--tw-prose-links': 'var(--accent2)',
+                            }}>
+                              <ReactMarkdown>{session.thinkingBoard}</ReactMarkdown>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-[var(--ink-muted)] text-sm">Thinking board...</div>
+                      )
+                    )}
+                    {tab === 'checklist' && (
+                      session.checklist ? (
+                        <ChecklistPanel checklist={session.checklist} sessionId={id} />
+                      ) : (
+                        <div className="flex items-center justify-center h-full text-[var(--ink-muted)] text-sm">Checklist being generated...</div>
+                      )
+                    )}
                   </motion.div>
                 </AnimatePresence>
               </div>

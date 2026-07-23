@@ -28,13 +28,17 @@ async function setup() {
   console.log('Authenticated as superuser')
   const headers = { Authorization: `Bearer ${token}` }
 
-  const collections = [
+  const newCollections = [
     {
       name: 'profiles',
       type: 'base',
       fields: [
         { name: 'name', type: 'text', required: true, max: 200 },
         { name: 'age', type: 'number', required: true },
+        { name: 'aiProvider', type: 'text', max: 50 },
+        { name: 'aiModel', type: 'text', max: 100 },
+        { name: 'apiKey', type: 'text', max: 500 },
+        { name: 'baseUrl', type: 'text', max: 500 },
         { name: 'created', type: 'autodate', system: true, onCreate: true, onUpdate: false },
         { name: 'updated', type: 'autodate', system: true, onCreate: true, onUpdate: true }
       ]
@@ -84,6 +88,32 @@ async function setup() {
         { name: 'created', type: 'autodate', system: true, onCreate: true, onUpdate: false },
         { name: 'updated', type: 'autodate', system: true, onCreate: true, onUpdate: true }
       ]
+    },
+    {
+      name: 'memories',
+      type: 'base',
+      fields: [
+        { name: 'sessionId', type: 'text', required: true, max: 100 },
+        { name: 'type', type: 'text', required: true, max: 50 },
+        { name: 'key', type: 'text', required: true, max: 200 },
+        { name: 'value', type: 'text', required: true, max: 10000 },
+        { name: 'importance', type: 'number' },
+        { name: 'created', type: 'autodate', system: true, onCreate: true, onUpdate: false },
+        { name: 'updated', type: 'autodate', system: true, onCreate: true, onUpdate: true }
+      ]
+    },
+    {
+      name: 'artifacts',
+      type: 'base',
+      fields: [
+        { name: 'sessionId', type: 'text', required: true, max: 100 },
+        { name: 'type', type: 'text', required: true, max: 50 },
+        { name: 'name', type: 'text', required: true, max: 200 },
+        { name: 'content', type: 'text', max: 500000 },
+        { name: 'mimeType', type: 'text', max: 100 },
+        { name: 'created', type: 'autodate', system: true, onCreate: true, onUpdate: false },
+        { name: 'updated', type: 'autodate', system: true, onCreate: true, onUpdate: true }
+      ]
     }
   ]
 
@@ -92,7 +122,7 @@ async function setup() {
   try { existing = await api('/api/collections', { headers }) } catch { existing = { items: [] } }
   const existingNames = existing.items.map(c => c.name)
 
-  for (const col of collections) {
+  for (const col of newCollections) {
     if (existingNames.includes(col.name)) {
       console.log(`Collection "${col.name}" exists — skipping`)
     } else {
@@ -118,7 +148,36 @@ async function setup() {
     console.log('Added blocks field to messages')
   }
 
-  // Migration: add listProfiles endpoint
+  // Migration: add settings fields to existing profiles
+  const profilesCol = existing.items.find(c => c.name === 'profiles')
+  if (profilesCol) {
+    const profileFields = profilesCol.fields.map(f => f.name)
+    const newProfileFields = [...profilesCol.fields]
+    for (const f of [{ name: 'aiProvider', type: 'text', max: 50 }, { name: 'aiModel', type: 'text', max: 100 }, { name: 'apiKey', type: 'text', max: 500 }, { name: 'baseUrl', type: 'text', max: 500 }]) {
+      if (!profileFields.includes(f.name)) {
+        newProfileFields.push(f)
+        console.log(`Adding "${f.name}" to profiles`)
+      }
+    }
+    if (newProfileFields.length > profilesCol.fields.length) {
+      await api(`/api/collections/profiles`, { method: 'PATCH', headers, body: JSON.stringify({ fields: newProfileFields }) })
+    }
+  }
+
+  // Migration: add memories + artifacts collections if they don't exist
+  const memoriesCol = existing.items.find(c => c.name === 'memories')
+  if (!memoriesCol) {
+    console.log('Creating memories collection...')
+    const mc = newCollections.find(c => c.name === 'memories')
+    if (mc) await api('/api/collections', { method: 'POST', headers, body: JSON.stringify(mc) })
+  }
+  const artifactsCol = existing.items.find(c => c.name === 'artifacts')
+  if (!artifactsCol) {
+    console.log('Creating artifacts collection...')
+    const ac = newCollections.find(c => c.name === 'artifacts')
+    if (ac) await api('/api/collections', { method: 'POST', headers, body: JSON.stringify(ac) })
+  }
+
   console.log('PocketBase schema setup complete!')
   console.log(`Admin UI: ${PB_URL}/_/`)
 }

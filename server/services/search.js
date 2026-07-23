@@ -23,17 +23,35 @@ export async function searchWeb(query) {
 export async function searchImages(query) {
   try {
     const res = await fetch(
-      `https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=5`,
+      `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}&iax=images&ia=images`,
       { headers: { 'User-Agent': 'LearnMosaic/1.0' } }
     )
     if (!res.ok) return []
-    const data = await res.json()
-    return data.docs.slice(0, 5).map(d => ({
-      title: d.title,
-      url: d.cover_i ? `https://covers.openlibrary.org/b/id/${d.cover_i}-L.jpg` : null
-    })).filter(i => i.url)
+    const html = await res.text()
+    const urls = [...html.matchAll(/<img[^>]+src="([^"]+)"[^>]*>/g)]
+      .map(m => m[1])
+      .filter(u => u.startsWith('http') && !u.includes('duckduckgo'))
+      .slice(0, 5)
+    return urls.map(url => ({ url, title: '' }))
   } catch {
-    return await searchDuckDuckGoImages(query)
+    return await searchDuckDuckGoImagesV2(query)
+  }
+}
+
+async function searchDuckDuckGoImagesV2(query) {
+  try {
+    const res = await fetch(
+      `https://lite.duckduckgo.com/lite/?q=${encodeURIComponent(query)}`,
+      { headers: { 'User-Agent': 'LearnMosaic/1.0' } }
+    )
+    const html = await res.text()
+    const urls = [...html.matchAll(/<img[^>]+src="([^"]+)"[^>]*>/g)]
+      .map(m => m[1])
+      .filter(u => u.startsWith('http'))
+      .slice(0, 5)
+    return urls.map(url => ({ url, title: '' }))
+  } catch {
+    return []
   }
 }
 

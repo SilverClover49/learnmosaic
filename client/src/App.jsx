@@ -9,6 +9,7 @@ import Curriculum from './pages/Curriculum'
 import Board from './pages/Board'
 import Checklist from './pages/Checklist'
 import Credits from './pages/Credits'
+import Settings from './pages/Settings'
 import ToastContainer from './components/ui/Toast'
 import CursorFollower from './components/visuals/CursorFollower'
 import { useTheme } from './lib/ThemeProvider'
@@ -32,6 +33,7 @@ export default function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="/session/:id" element={<Session />} />
           <Route path="/session/:id/curriculum" element={<Curriculum />} />
           <Route path="/session/:id/board" element={<Board />} />

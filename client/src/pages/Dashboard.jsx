@@ -35,7 +35,9 @@ export default function Dashboard() {
     try {
       const data = await api.listSessions()
       setSessions(data || [])
-    } catch {}
+    } catch (e) {
+      console.warn('Failed to load sessions:', e)
+    }
     setLoading(false)
   }
 
@@ -56,8 +58,8 @@ export default function Dashboard() {
 
   const handleRename = async (id, newName) => {
     try {
-      await api.updateSession(id, { goal: newName })
-      setSessions(prev => prev.map(s => s.id === id ? { ...s, goal: newName } : s))
+      await api.updateSession(id, { name: newName })
+      setSessions(prev => prev.map(s => s.id === id ? { ...s, name: newName } : s))
       toast({ message: 'Renamed!', duration: 2000 })
     } catch {}
   }

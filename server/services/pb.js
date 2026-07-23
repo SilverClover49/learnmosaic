@@ -50,6 +50,8 @@ export const pb = {
 
   getProfile: (id) => api('GET', `/api/collections/profiles/records/${id}`),
 
+  updateProfile: (id, data) => api('PATCH', `/api/collections/profiles/records/${id}`, data),
+
   findProfileByName: async (name) => {
     const res = await api('GET', `/api/collections/profiles/records?filter=(name~'${encodeURIComponent(name)}')&perPage=1`)
     return res?.items?.[0] || null
@@ -104,6 +106,49 @@ export const pb = {
     const res = await api('GET', `/api/collections/milestones/records?filter=(sessionId='${sessionId}')&perPage=500`)
     for (const m of (res?.items || [])) {
       await api('DELETE', `/api/collections/milestones/records/${m.id}`)
+    }
+  },
+
+  // Memories
+  getMemories: async (sessionId) => {
+    const res = await api('GET', `/api/collections/memories/records?filter=(sessionId='${sessionId}')&sort=-created&perPage=200`)
+    return res?.items || []
+  },
+
+  createMemory: (data) => api('POST', '/api/collections/memories/records', data),
+
+  updateMemory: (id, data) => api('PATCH', `/api/collections/memories/records/${id}`, data),
+
+  deleteMemory: (id) => api('DELETE', `/api/collections/memories/records/${id}`),
+
+  getMemoryByKey: async (sessionId, key) => {
+    const res = await api('GET', `/api/collections/memories/records?filter=(sessionId='${sessionId}'%26%26key='${encodeURIComponent(key)}')&perPage=1`)
+    return res?.items?.[0] || null
+  },
+
+  deleteMemoriesBySession: async (sessionId) => {
+    const res = await api('GET', `/api/collections/memories/records?filter=(sessionId='${sessionId}')&perPage=500`)
+    for (const m of (res?.items || [])) {
+      await api('DELETE', `/api/collections/memories/records/${m.id}`)
+    }
+  },
+
+  // Artifacts
+  getArtifacts: async (sessionId) => {
+    const res = await api('GET', `/api/collections/artifacts/records?filter=(sessionId='${sessionId}')&sort=-created&perPage=100`)
+    return res?.items || []
+  },
+
+  createArtifact: (data) => api('POST', '/api/collections/artifacts/records', data),
+
+  getArtifact: (id) => api('GET', `/api/collections/artifacts/records/${id}`),
+
+  deleteArtifact: (id) => api('DELETE', `/api/collections/artifacts/records/${id}`),
+
+  deleteArtifactsBySession: async (sessionId) => {
+    const res = await api('GET', `/api/collections/artifacts/records?filter=(sessionId='${sessionId}')&perPage=500`)
+    for (const a of (res?.items || [])) {
+      await api('DELETE', `/api/collections/artifacts/records/${a.id}`)
     }
   }
 }

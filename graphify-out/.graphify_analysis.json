@@ -1,0 +1,359 @@
+{
+  "communities": {
+    "0": [
+      "server_index",
+      "server_index_app",
+      "server_routes_documents",
+      "server_routes_documents_router",
+      "server_routes_sessions",
+      "server_routes_sessions_dirname",
+      "server_routes_sessions_loadprompt",
+      "server_routes_sessions_promptsdir",
+      "server_routes_sessions_router",
+      "server_routes_sessions_upload",
+      "server_routes_users",
+      "server_routes_users_db_path",
+      "server_routes_users_dirname",
+      "server_routes_users_getusers",
+      "server_routes_users_router",
+      "server_routes_users_saveusers",
+      "server_services_openrouter",
+      "server_services_openrouter_callai",
+      "server_services_session_store",
+      "server_services_session_store_addmilestone",
+      "server_services_session_store_deletesessiondir",
+      "server_services_session_store_dirname",
+      "server_services_session_store_ensuresessiondir",
+      "server_services_session_store_getmilestones",
+      "server_services_session_store_listsessions",
+      "server_services_session_store_readsessionfile",
+      "server_services_session_store_readsessionjson",
+      "server_services_session_store_store_dir",
+      "server_services_session_store_writesessionfile",
+      "server_services_session_store_writesessionjson"
+    ],
+    "1": [
+      "client_package",
+      "client_package_dependencies",
+      "client_package_dependencies_framer_motion",
+      "client_package_dependencies_react",
+      "client_package_dependencies_react_dom",
+      "client_package_dependencies_react_markdown",
+      "client_package_dependencies_react_router_dom",
+      "client_package_dependencies_tailwindcss",
+      "client_package_dependencies_tailwindcss_vite",
+      "client_package_devdependencies",
+      "client_package_devdependencies_vite",
+      "client_package_devdependencies_vitejs_plugin_react",
+      "client_package_name",
+      "client_package_private",
+      "client_package_scripts",
+      "client_package_scripts_build",
+      "client_package_scripts_dev",
+      "client_package_scripts_preview",
+      "client_package_type",
+      "client_package_version",
+      "framer_motion",
+      "react",
+      "react_dom",
+      "react_markdown",
+      "react_router_dom",
+      "tailwindcss",
+      "tailwindcss_vite",
+      "vite",
+      "vitejs_plugin_react"
+    ],
+    "2": [
+      "client_src_components_session_artifactrenderer",
+      "client_src_components_session_artifactrenderer_artifactrenderer",
+      "client_src_components_session_fileuploader",
+      "client_src_components_session_fileuploader_fileuploader",
+      "client_src_components_ui_bauhausconfetti",
+      "client_src_components_ui_bauhausconfetti_bauhausconfetti",
+      "client_src_components_ui_bauhausconfetti_colors",
+      "client_src_components_ui_bauhausconfetti_shape",
+      "client_src_components_ui_modal",
+      "client_src_components_ui_modal_modal",
+      "client_src_components_ui_reveal",
+      "client_src_components_ui_reveal_revealblock",
+      "client_src_components_ui_reveal_revealtext",
+      "client_src_components_ui_reveal_staggeritem",
+      "client_src_components_ui_reveal_staggerreveal",
+      "client_src_components_ui_toast",
+      "client_src_components_ui_toast_toast",
+      "client_src_components_ui_toast_toastcontainer",
+      "client_src_components_ui_toast_toastitem",
+      "client_src_pages_dashboard",
+      "client_src_pages_dashboard_cardcolors",
+      "client_src_pages_dashboard_dashboard",
+      "client_src_pages_session",
+      "client_src_pages_session_formattime",
+      "client_src_pages_session_formattimer",
+      "client_src_pages_session_session"
+    ],
+    "3": [
+      "client_src_components_ui_input",
+      "client_src_components_ui_input_input",
+      "client_src_components_ui_magneticbutton",
+      "client_src_components_ui_magneticbutton_magneticbutton",
+      "client_src_components_ui_progressbar",
+      "client_src_components_ui_progressbar_progressbar",
+      "client_src_components_visuals_ambientbackground",
+      "client_src_components_visuals_ambientbackground_ambientbackground",
+      "client_src_pages_credits",
+      "client_src_pages_credits_confetticolors",
+      "client_src_pages_credits_confettipiece",
+      "client_src_pages_credits_countup",
+      "client_src_pages_credits_credits",
+      "client_src_pages_credits_fadeup",
+      "client_src_pages_onboarding",
+      "client_src_pages_onboarding_fadeslide",
+      "client_src_pages_onboarding_floatingshape",
+      "client_src_pages_onboarding_goals",
+      "client_src_pages_onboarding_interests",
+      "client_src_pages_onboarding_onboarding",
+      "client_src_pages_onboarding_stepicons"
+    ],
+    "4": [
+      "client_src_app",
+      "client_src_app_app",
+      "client_src_app_scrolltotop",
+      "client_src_components_visuals_colorpicker",
+      "client_src_components_visuals_colorpicker_colorpicker",
+      "client_src_components_visuals_colorpicker_presets",
+      "client_src_components_visuals_colorpicker_textures",
+      "client_src_components_visuals_cursorfollower",
+      "client_src_components_visuals_cursorfollower_cursorfollower",
+      "client_src_components_visuals_particlesbg",
+      "client_src_components_visuals_particlesbg_particlesbg",
+      "client_src_lib_themeprovider",
+      "client_src_lib_themeprovider_themecontext",
+      "client_src_lib_themeprovider_themeprovider",
+      "client_src_lib_themeprovider_themes",
+      "client_src_lib_themeprovider_usetheme",
+      "client_src_main",
+      "client_src_pages_board_board",
+      "client_src_pages_checklist_checklist",
+      "client_src_pages_curriculum_curriculum"
+    ],
+    "5": [
+      "cors",
+      "dotenv",
+      "express",
+      "multer",
+      "server_package",
+      "server_package_dependencies",
+      "server_package_dependencies_cors",
+      "server_package_dependencies_dotenv",
+      "server_package_dependencies_express",
+      "server_package_dependencies_multer",
+      "server_package_dependencies_uuid",
+      "server_package_name",
+      "server_package_private",
+      "server_package_scripts",
+      "server_package_scripts_dev",
+      "server_package_scripts_start",
+      "server_package_type",
+      "server_package_version",
+      "uuid"
+    ],
+    "6": [
+      "client_src_components_layout_pagetransition",
+      "client_src_components_layout_pagetransition_pagetransition",
+      "client_src_components_ui_button",
+      "client_src_components_ui_button_button",
+      "client_src_lib_api",
+      "client_src_lib_api_api",
+      "client_src_lib_api_req",
+      "client_src_pages_board",
+      "client_src_pages_checklist",
+      "client_src_pages_curriculum",
+      "client_src_pages_landing",
+      "client_src_pages_landing_fadeup",
+      "client_src_pages_landing_landing",
+      "client_src_pages_landing_stagger",
+      "client_src_pages_landing_taglines"
+    ],
+    "7": [
+      "concurrently",
+      "package",
+      "package_devdependencies",
+      "package_devdependencies_concurrently",
+      "package_name",
+      "package_private",
+      "package_scripts",
+      "package_scripts_build",
+      "package_scripts_dev",
+      "package_scripts_dev_client",
+      "package_scripts_dev_server",
+      "package_scripts_start",
+      "package_type",
+      "package_version"
+    ],
+    "8": [
+      "client_src_components_ui_card",
+      "client_src_components_ui_card_card"
+    ],
+    "9": [
+      "client_vite_config"
+    ]
+  },
+  "cohesion": {
+    "0": 0.11264367816091954,
+    "1": 0.06896551724137931,
+    "2": 0.12307692307692308,
+    "3": 0.12857142857142856,
+    "4": 0.1631578947368421,
+    "5": 0.10526315789473684,
+    "6": 0.2857142857142857,
+    "7": 0.14285714285714285,
+    "8": 1.0,
+    "9": 1.0
+  },
+  "gods": [
+    {
+      "id": "client_src_components_layout_pagetransition_pagetransition",
+      "label": "PageTransition()",
+      "degree": 9
+    },
+    {
+      "id": "client_src_lib_api_api",
+      "label": "api",
+      "degree": 9
+    },
+    {
+      "id": "client_src_lib_themeprovider_usetheme",
+      "label": "useTheme()",
+      "degree": 7
+    },
+    {
+      "id": "package_scripts",
+      "label": "scripts",
+      "degree": 6
+    },
+    {
+      "id": "client_src_components_ui_button_button",
+      "label": "Button()",
+      "degree": 5
+    },
+    {
+      "id": "client_src_components_ui_magneticbutton_magneticbutton",
+      "label": "MagneticButton()",
+      "degree": 5
+    },
+    {
+      "id": "client_src_components_ui_toast_toast",
+      "label": "toast()",
+      "degree": 5
+    },
+    {
+      "id": "client_src_components_visuals_ambientbackground_ambientbackground",
+      "label": "AmbientBackground()",
+      "degree": 5
+    },
+    {
+      "id": "client_src_pages_session_session",
+      "label": "Session()",
+      "degree": 5
+    },
+    {
+      "id": "client_package_scripts",
+      "label": "scripts",
+      "degree": 4
+    }
+  ],
+  "surprises": [
+    {
+      "source": "App()",
+      "target": "useTheme()",
+      "source_files": [
+        "client/src/App.jsx",
+        "client/src/lib/ThemeProvider.jsx"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "cross-file semantic connection"
+    },
+    {
+      "source": "Dashboard()",
+      "target": "toast()",
+      "source_files": [
+        "client/src/pages/Dashboard.jsx",
+        "client/src/components/ui/Toast.jsx"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "cross-file semantic connection"
+    },
+    {
+      "source": "Session()",
+      "target": "toast()",
+      "source_files": [
+        "client/src/pages/Session.jsx",
+        "client/src/components/ui/Toast.jsx"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "cross-file semantic connection"
+    },
+    {
+      "source": "ColorPicker()",
+      "target": "useTheme()",
+      "source_files": [
+        "client/src/components/visuals/ColorPicker.jsx",
+        "client/src/lib/ThemeProvider.jsx"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "cross-file semantic connection"
+    },
+    {
+      "source": "ParticlesBg()",
+      "target": "useTheme()",
+      "source_files": [
+        "client/src/components/visuals/ParticlesBg.jsx",
+        "client/src/lib/ThemeProvider.jsx"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "cross-file semantic connection"
+    }
+  ],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `PageTransition()` connect `Community 6` to `Community 2`, `Community 3`?",
+      "why": "High betweenness centrality (0.012) - this node is a cross-community bridge."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `name`, `private`, `version` to the rest of the system?",
+      "why": "60 weakly-connected nodes found - possible documentation gaps or missing edges."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 0` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.11264367816091954 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 1` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.06896551724137931 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 2` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.12307692307692308 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 3` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.12857142857142856 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 5` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.10526315789473684 - nodes in this community are weakly interconnected."
+    }
+  ]
+}

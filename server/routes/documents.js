@@ -1,9 +1,11 @@
 import { Router } from 'express'
 import { callAI } from '../services/openrouter.js'
+import { getSettings } from '../services/settings.js'
 
 const router = Router()
 
 router.get('/lean-canvas', async (req, res) => {
+  const settings = await getSettings()
   const system = `You are a business strategist helping generate a Lean Canvas for an educational technology project.`
 
   const prompt = `Generate a complete Lean Canvas for "LearnMosaic" — an AI-powered personalized learning platform targeting SDG 4 (Quality Education).
@@ -43,11 +45,12 @@ What can't be easily copied?
 Format this as a clean markdown document with a table for the Lean Canvas and detailed explanations below.`
 
   try {
-    const content = await callAI({
+    const result = await callAI({
       system,
-      messages: [{ role: 'user', content: prompt }]
+      messages: [{ role: 'user', content: prompt }],
+      settings
     })
-    res.json({ content })
+    res.json({ content: result.content || '' })
   } catch (e) {
     res.status(500).json({ error: e.message })
   }

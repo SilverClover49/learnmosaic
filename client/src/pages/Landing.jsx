@@ -35,7 +35,7 @@ export default function Landing() {
   const [showUsers, setShowUsers] = useState(false)
 
   useEffect(() => {
-    api.listUsers().then(setUsers).catch(() => {})
+    api.listUsers().then(setUsers).catch(() => console.warn('Failed to load users'))
   }, [])
 
   useEffect(() => {

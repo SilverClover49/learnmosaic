@@ -1,0 +1,218 @@
+{
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/App.jsx": {
+    "mtime": 1784823489472.6965,
+    "hash": "0a3241817c1823b7e96fd8ef90f3a0d3"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/components/dashboard/ProfilePanel.jsx": {
+    "mtime": 1784823509965.8967,
+    "hash": "5c78be3624c3fcb32996f1a6a234e67b"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/components/layout/PageTransition.jsx": {
+    "mtime": 1784754099822.5796,
+    "hash": "1d570e97671388bc8b61e7c90e575a4a"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/components/session/ArtifactRenderer.jsx": {
+    "mtime": 1784824715096.974,
+    "hash": "1c50f50fda47a1209c750bbfe955d99d"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/components/session/FileUploader.jsx": {
+    "mtime": 1784754037050.8938,
+    "hash": "d46e0dc9ec66e67ac53d871c8515dfbf"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/components/session/SelectionToolbar.jsx": {
+    "mtime": 1784822110270.184,
+    "hash": "6e0a5bd2b653226fb6057a7e74c85136"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/components/session/SessionMenu.jsx": {
+    "mtime": 1784819021189.7876,
+    "hash": "c1fc75f63dd33bc0b649e1ba72f3458b"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/components/ui/BauhausConfetti.jsx": {
+    "mtime": 1784757827678.1353,
+    "hash": "71b7cf81345e21fab08420c30d956b76"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/components/ui/Button.jsx": {
+    "mtime": 1784755192847.9604,
+    "hash": "1bf542ad40d4753b15b289dc3c54e69a"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/components/ui/Card.jsx": {
+    "mtime": 1784755208282.6274,
+    "hash": "6523c9d70a361e760d4803605306fa11"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/components/ui/Input.jsx": {
+    "mtime": 1784755219521.69,
+    "hash": "72044f6429d1fcf2f2df80b71ce383a8"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/components/ui/MagneticButton.jsx": {
+    "mtime": 1784756818853.608,
+    "hash": "e344e7698ee3cd9cfd9a3d67be144628"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/components/ui/Modal.jsx": {
+    "mtime": 1784755233881.7993,
+    "hash": "77a9bb8fe03f8004d620f53cba0437e3"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/components/ui/ProgressBar.jsx": {
+    "mtime": 1784755282151.489,
+    "hash": "ba64e7aff111bff4fe366a4cfc3922b8"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/components/ui/Reveal.jsx": {
+    "mtime": 1784756808519.4333,
+    "hash": "bdc6b1800efc6870e135861dfbea1763"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/components/ui/Toast.jsx": {
+    "mtime": 1784757220460.9717,
+    "hash": "d001b633129786e562cdfa2c63e871d0"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/components/visuals/AmbientBackground.jsx": {
+    "mtime": 1784810641120.1814,
+    "hash": "0059bf975017d7506c4e9e5d9dfecce8"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/components/visuals/ColorPicker.jsx": {
+    "mtime": 1784810559110.6196,
+    "hash": "d077eb121750be42b1155b4c09cdf230"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/components/visuals/CursorFollower.jsx": {
+    "mtime": 1784756786422.1614,
+    "hash": "94267b94b53d8b047bbbc66f1a841722"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/lib/ThemeProvider.jsx": {
+    "mtime": 1784810521523.979,
+    "hash": "6a207a66487832f54f2e59340c32789d"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/lib/api.js": {
+    "mtime": 1784824849587.0452,
+    "hash": "6f114b35235995ae23c06d3f2b736884"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/main.jsx": {
+    "mtime": 1784752394933.2002,
+    "hash": "79a0c12e49978688c5efdf3638bbbb54"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/pages/Board.jsx": {
+    "mtime": 1784824696559.7441,
+    "hash": "86115ab66213b98dea9b04757446f359"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/pages/Checklist.jsx": {
+    "mtime": 1784754061388.3433,
+    "hash": "a4adee91c9bf5e993e2c5e7232ba7288"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/pages/Credits.jsx": {
+    "mtime": 1784804573706.0293,
+    "hash": "4e822aaa7330c856e0a3f9a8dfe8f1b3"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/pages/Curriculum.jsx": {
+    "mtime": 1784754052506.325,
+    "hash": "0e9ea6dcb25e9e7bde217c7108f17934"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/pages/Dashboard.jsx": {
+    "mtime": 1784819779384.1345,
+    "hash": "18076e715d55030cb392e12a79fb50a2"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/pages/Landing.jsx": {
+    "mtime": 1784819745829.6113,
+    "hash": "e6a0cbcab19178e5b0b04e7a861baa28"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/pages/Onboarding.jsx": {
+    "mtime": 1784757618147.444,
+    "hash": "8816df5af4b767ac0a4487d1f0e5f39d"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/src/pages/Session.jsx": {
+    "mtime": 1784824878622.0842,
+    "hash": "daae2d54563d4814834a2071872bafc1"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/vite.config.js": {
+    "mtime": 1784752392749.3767,
+    "hash": "4823b94e253a501d7cf19a9af030adbd"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/server/index.js": {
+    "mtime": 1784823240099.6382,
+    "hash": "ec5f484046821e24ad8c51358dc14f47"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/server/routes/documents.js": {
+    "mtime": 1784825419580.7173,
+    "hash": "6b7df4025bb87b4b637b82ae7f661c84"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/server/routes/sessions.js": {
+    "mtime": 1784825443419.3096,
+    "hash": "dc6dcb3da95dfb242425a9afe3597a66"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/server/routes/users.js": {
+    "mtime": 1784810106783.0808,
+    "hash": "666bfe170cf4757cb4bd99ec6dc48746"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/server/services/imagegen.js": {
+    "mtime": 1784817087231.7231,
+    "hash": "657a284b8a3e9ec7a503d4b34f27ea57"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/server/services/openrouter.js": {
+    "mtime": 1784825389186.2275,
+    "hash": "8a4391069c0ad352484f44c27dd24883"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/server/services/pb.js": {
+    "mtime": 1784823231744.5386,
+    "hash": "0abce889ec2b1096fc32a9b5b76dd79f"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/server/services/search.js": {
+    "mtime": 1784819607065.8977,
+    "hash": "e3af9cf766413225db0cc78835bc31da"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/server/services/tools.js": {
+    "mtime": 1784825423592.902,
+    "hash": "4e37e9bb8c7904f1f7d36e675afa645d"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/server/setup-pb.js": {
+    "mtime": 1784823217275.083,
+    "hash": "1b83d81aae481b169b5f2173f3201db0"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/CLAUDE.md": {
+    "mtime": 1784817206993.445,
+    "hash": "390759323f9f642baa974fd38f0cac38"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/LEAN_CANVAS.md": {
+    "mtime": 1784752649458.2163,
+    "hash": "0faa3b345fbdc1389389f8100152fd77"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/PRESENTATION.md": {
+    "mtime": 1784752676455.5486,
+    "hash": "98ac9743676815a622891ccebf9a1741"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/PRESENTATION_SLIDES.html": {
+    "mtime": 1784820034673.9287,
+    "hash": "e23a2e44cd284209d7a9ec73f3b29223"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/PRODUCT.md": {
+    "mtime": 1784753395355.9956,
+    "hash": "f1402ce31c7682c186727b3aa6cb8f8f"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/client/index.html": {
+    "mtime": 1784755083506.3792,
+    "hash": "298fd918bbdfceabaa2a387d5e38b76c"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/server/prompts/checklist.md": {
+    "mtime": 1784752440136.4282,
+    "hash": "4c4c9cb6c96251472686a73827e8e264"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/server/prompts/constitution.md": {
+    "mtime": 1784752432870.3667,
+    "hash": "07e6ae231e1daa21a6ab3d7adb7b3aee"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/server/prompts/curriculum.md": {
+    "mtime": 1784752436156.6611,
+    "hash": "ae3f147f3a052ecc2533d10137898e8f"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/server/prompts/summarize.md": {
+    "mtime": 1784804557659.014,
+    "hash": "b4eea2eab2c72bb8e3cc3bb1a4d4a95e"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/server/prompts/tools.md": {
+    "mtime": 1784822074751.7656,
+    "hash": "44903a959a27060208bdd70030a92a81"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/server/prompts/tutor.md": {
+    "mtime": 1784817070227.388,
+    "hash": "2becce27a79e982d54ef06025328f040"
+  },
+  "D:/AICTE-AI-Internship/learnmosaic/LearnMosaic-Presentation.pdf": {
+    "mtime": 1784820066778.509,
+    "hash": "d5e315b281cb521f337a1ee6f59ae126"
+  }
+}

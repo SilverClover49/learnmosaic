@@ -1,94 +1,50 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-export default function SelectionToolbar({ containerRef, onAskDoubt }) {
-  const [show, setShow] = useState(false)
-  const [position, setPosition] = useState({ x: 0, y: 0 })
-  const [selectedText, setSelectedText] = useState('')
-  const toolbarRef = useRef(null)
+export default function SelectionToolbar({ containerRef, onReference }) {
+  const [selection, setSelection] = useState(null)
+
+  const handleMouseUp = useCallback(() => {
+    const sel = window.getSelection()
+    if (!sel || sel.isCollapsed || !sel.toString().trim()) {
+      setSelection(null)
+      return
+    }
+    const text = sel.toString().trim()
+    if (text.length < 3 || text.length > 500) return
+
+    const range = sel.getRangeAt(0)
+    const rect = range.getBoundingClientRect()
+
+    setSelection({ text, x: rect.left + rect.width / 2, y: rect.top - 10 })
+  }, [])
 
   useEffect(() => {
-    const handleMouseUp = (e) => {
-      // Wait a tick for selection to settle
-      setTimeout(() => {
-        const sel = window.getSelection()
-        const text = sel?.toString()?.trim()
-        if (!text || text.length < 3) {
-          setShow(false)
-          return
-        }
-
-        // Check selection is inside our container
-        const container = containerRef?.current
-        if (!container || !container.contains(sel?.anchorNode)) {
-          setShow(false)
-          return
-        }
-
-        // Position toolbar near selection
-        const range = sel.getRangeAt(0)
-        const rect = range.getBoundingClientRect()
-        const containerRect = container.getBoundingClientRect()
-
-        setSelectedText(text)
-        setPosition({
-          x: rect.left - containerRect.left + rect.width / 2,
-          y: rect.top - containerRect.top - 8
-        })
-        setShow(true)
-      }, 10)
-    }
-
-    const handleMouseDown = (e) => {
-      if (toolbarRef.current && !toolbarRef.current.contains(e.target)) {
-        setShow(false)
-      }
-    }
-
-    const container = containerRef?.current
-    if (container) {
-      container.addEventListener('mouseup', handleMouseUp)
-      document.addEventListener('mousedown', handleMouseDown)
-    }
-
-    return () => {
-      if (container) container.removeEventListener('mouseup', handleMouseUp)
-      document.removeEventListener('mousedown', handleMouseDown)
-    }
-  }, [containerRef])
-
-  const handleAsk = () => {
-    onAskDoubt(selectedText)
-    setShow(false)
-    window.getSelection()?.removeAllRanges()
-  }
+    const container = containerRef?.current || document
+    container.addEventListener('mouseup', handleMouseUp)
+    return () => container.removeEventListener('mouseup', handleMouseUp)
+  }, [containerRef, handleMouseUp])
 
   return (
     <AnimatePresence>
-      {show && (
+      {selection && (
         <motion.div
-          ref={toolbarRef}
-          initial={{ opacity: 0, scale: 0.85, y: 4 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.85, y: 4 }}
-          transition={{ duration: 0.15 }}
-          className="absolute z-50 pointer-events-auto"
-          style={{
-            left: position.x,
-            top: position.y,
-            transform: 'translate(-50%, -100%)'
-          }}
+          initial={{ opacity: 0, y: 8, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -8, scale: 0.9 }}
+          transition={{ duration: 0.2 }}
+          style={{ left: selection.x, top: selection.y }}
+          className="fixed z-[var(--z-dropdown)] -translate-x-1/2 -translate-y-full"
         >
-          <button
-            onClick={handleAsk}
-            className="flex items-center gap-2 px-4 py-2 bg-[var(--bauhaus-black)] text-white text-[11px] uppercase tracking-wider font-bold whitespace-nowrap cursor-pointer hover:bg-[var(--bauhaus-red)] transition-colors shadow-lg"
-          >
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <circle cx="8" cy="8" r="6" />
-              <path d="M8 5v3M8 11v-1" strokeLinecap="square" />
-            </svg>
-            ASK DOUBT
-          </button>
+          <div className="flex gap-1 bg-[var(--bauhaus-black)] border-2 border-[var(--bauhaus-yellow)]">
+            <motion.button
+              whileHover={{ backgroundColor: 'var(--bauhaus-yellow)', color: 'var(--bauhaus-black)' }}
+              onClick={() => { onReference(selection.text); setSelection(null); window.getSelection()?.removeAllRanges() }}
+              className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white cursor-pointer transition-colors"
+            >
+              + Reference
+            </motion.button>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>

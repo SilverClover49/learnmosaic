@@ -1,15 +1,14 @@
 import 'dotenv/config'
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY
-
-export async function generateImage(prompt) {
-  if (!OPENROUTER_API_KEY) return null
+export async function generateImage(prompt, settings = {}) {
+  const apiKey = settings.apiKey || process.env.OPENROUTER_API_KEY
+  if (!apiKey) return null
   try {
     const res = await fetch('https://openrouter.ai/api/v1/images/generations', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENROUTER_API_KEY}`
+        'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
         model: 'dall-e-3',

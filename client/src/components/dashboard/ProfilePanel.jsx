@@ -102,6 +102,19 @@ export default function ProfilePanel({ user, sessions, open, onClose }) {
                 </button>
               </div>
 
+              {/* Settings */}
+              <div className="mb-8">
+                <button
+                  onClick={() => { navigate('/settings'); onClose() }}
+                  className="w-full flex items-center justify-center gap-3 px-4 py-3 text-sm uppercase tracking-wider border-[2px] border-[var(--bauhaus-black)] text-[var(--ink)] hover:bg-[var(--bauhaus-yellow)] hover:text-[var(--bauhaus-black)] transition-all cursor-pointer"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
+                    <circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                  </svg>
+                  SETTINGS
+                </button>
+              </div>
+
               {/* Danger zone */}
               <div>
                 <p className="text-[10px] uppercase tracking-wider text-[var(--ink-muted)] mb-3">DANGER ZONE</p>

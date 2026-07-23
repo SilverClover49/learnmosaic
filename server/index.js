@@ -4,6 +4,7 @@ import cors from 'cors'
 import usersRouter from './routes/users.js'
 import sessionsRouter from './routes/sessions.js'
 import documentsRouter from './routes/documents.js'
+import settingsRouter from './routes/settings.js'
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -15,6 +16,7 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }))
 app.use('/api/users', usersRouter)
 app.use('/api/sessions', sessionsRouter)
 app.use('/api/documents', documentsRouter)
+app.use('/api/settings', settingsRouter)
 
 app.use((err, req, res, next) => {
   console.error(err)
