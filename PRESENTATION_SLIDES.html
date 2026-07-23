@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LearnMosaic - Presentation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        @page { size: landscape; margin: 0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --red: #E63946;
+            --yellow: #F4D35E;
+            --blue: #1D3557;
+            --black: #0D1117;
+            --white: #FAFAFA;
+            --gray: #F0F0F0;
+        }
+        
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--white);
+            color: var(--black);
+        }
+        
+        .slide {
+            width: 1920px;
+            height: 1080px;
+            position: relative;
+            overflow: hidden;
+            page-break-after: always;
+            display: flex;
+        }
+        
+        /* Slide 1: Title */
+        .slide-title {
+            background: var(--white);
+        }
+        
+        .slide-title .left {
+            width: 45%;
+            height: 100%;
+            padding: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border-right: 4px solid var(--black);
+        }
+        
+        .slide-title .right {
+            width: 55%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .logo-mark {
+            width: 100px;
+            height: 100px;
+            background: var(--red);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+        
+        .logo-mark span {
+            font-size: 60px;
+            font-weight: 700;
+            color: var(--white);
+        }
+        
+        .title-main {
+            font-size: 96px;
+            font-weight: 700;
+            line-height: 0.9;
+            letter-spacing: -3px;
+            margin-bottom: 20px;
+        }
+        
+        .title-main .highlight {
+            color: var(--red);
+        }
+        
+        .title-sub {
+            font-size: 14px;
+            letter-spacing: 4px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 40px;
+        }
+        
+        .title-tagline {
+            font-size: 24px;
+            color: #999;
+        }
+        
+        .geometric {
+            position: absolute;
+        }
+        
+        .geo-circle {
+            width: 400px;
+            height: 400px;
+            background: var(--yellow);
+            border-radius: 50%;
+            top: 50%;
+            left: 30%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .geo-diamond {
+            width: 300px;
+            height: 300px;
+            background: var(--blue);
+            top: 50%;
+            left: 55%;
+            transform: translate(-50%, -50%) rotate(45deg);
+        }
+        
+        .geo-triangle {
+            width: 0;
+            height: 0;
+            border-left: 100px solid transparent;
+            border-right: 100px solid transparent;
+            border-bottom: 173px solid var(--black);
+            top: 60%;
+            left: 40%;
+        }
+        
+        .geo-small-circle {
+            width: 120px;
+            height: 120px;
+            background: var(--red);
+            border-radius: 50%;
+            top: 35%;
+            left: 65%;
+        }
+        
+        /* Slide 2: Problem */
+        .slide-problem {
+            background: var(--black);
+            color: var(--white);
+        }
+        
+        .slide-problem .content {
+            width: 100%;
+            padding: 80px 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .slide-label {
+            font-size: 12px;
+            letter-spacing: 4px;
+            color: var(--red);
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+        
+        .slide-heading {
+            font-size: 72px;
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 60px;
+            max-width: 900px;
+        }
+        
+        .problem-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+        }
+        
+        .problem-card {
+            padding: 40px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .problem-number {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--red);
+            margin-bottom: 20px;
+        }
+        
+        .problem-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        
+        .problem-desc {
+            font-size: 16px;
+            color: #999;
+            line-height: 1.6;
+        }
+        
+        /* Slide 3: Solution */
+        .slide-solution {
+            background: var(--white);
+        }
+        
+        .slide-solution .content {
+            width: 100%;
+            padding: 80px 120px;
+            display: flex;
+            gap: 80px;
+        }
+        
+        .slide-solution .text {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .slide-solution .visual {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .solution-features {
+            margin-top: 40px;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--red);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        
+        .feature-icon span {
+            color: var(--white);
+            font-size: 24px;
+        }
+        
+        .feature-text h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .feature-text p {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        /* Slide 4: Demo */
+        .slide-demo {
+            background: var(--gray);
+        }
+        
+        .slide-demo .content {
+            width: 100%;
+            padding: 60px 80px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .demo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+        
+        .demo-window {
+            flex: 1;
+            background: var(--white);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+        }
+        
+        .demo-titlebar {
+            height: 40px;
+            background: var(--black);
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            gap: 8px;
+        }
+        
+        .demo-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .demo-dot.red { background: #FF5F56; }
+        .demo-dot.yellow { background: #FFBD2E; }
+        .demo-dot.green { background: #27C93F; }
+        
+        .demo-content {
+            padding: 40px;
+            display: flex;
+            gap: 40px;
+        }
+        
+        .demo-chat {
+            flex: 2;
+        }
+        
+        .demo-sidebar {
+            flex: 1;
+            padding: 24px;
+            background: var(--gray);
+            border-radius: 8px;
+        }
+        
+        .chat-message {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .chat-avatar {
+            width: 32px;
+            height: 32px;
+            background: var(--red);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        
+        .chat-bubble {
+            background: var(--gray);
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .chat-bubble.user {
+            background: var(--blue);
+            color: var(--white);
+            margin-left: auto;
+            max-width: 70%;
+        }
+        
+        /* Slide 5: Tech Stack */
+        .slide-tech {
+            background: var(--blue);
+            color: var(--white);
+        }
+        
+        .slide-tech .content {
+            width: 100%;
+            padding: 80px 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-top: 60px;
+        }
+        
+        .tech-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 32px;
+            text-align: center;
+        }
+        
+        .tech-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        
+        .tech-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .tech-desc {
+            font-size: 13px;
+            color: #999;
+        }
+        
+        /* Slide 6: SDG */
+        .slide-sdg {
+            background: var(--white);
+        }
+        
+        .slide-sdg .content {
+            width: 100%;
+            padding: 80px 120px;
+            display: flex;
+            gap: 80px;
+            align-items: center;
+        }
+        
+        .sdg-badge {
+            width: 200px;
+            height: 200px;
+            background: #E5243B;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+        }
+        
+        .sdg-number {
+            font-size: 72px;
+            font-weight: 700;
+        }
+        
+        .sdg-text {
+            font-size: 14px;
+            text-align: center;
+            padding: 0 20px;
+        }
+        
+        /* Slide 7: Thank You */
+        .slide-thankyou {
+            background: var(--black);
+            color: var(--white);
+        }
+        
+        .slide-thankyou .content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        .thankyou-heading {
+            font-size: 96px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+        
+        .thankyou-sub {
+            font-size: 24px;
+            color: #999;
+            margin-bottom: 60px;
+        }
+        
+        .thankyou-link {
+            font-size: 18px;
+            color: var(--red);
+        }
+    </style>
+</head>
+<body>
+
+<!-- Slide 1: Title -->
+<div class="slide slide-title">
+    <div class="left">
+        <div class="logo-mark"><span>L</span></div>
+        <div class="title-sub">SDG 4 — Quality Education</div>
+        <h1 class="title-main">LEARN<br><span class="highlight">MOSAIC</span></h1>
+        <p class="title-tagline">AI-Powered Personalized Learning</p>
+    </div>
+    <div class="right">
+        <div class="geometric geo-circle"></div>
+        <div class="geometric geo-diamond"></div>
+        <div class="geometric geo-triangle"></div>
+        <div class="geometric geo-small-circle"></div>
+    </div>
+</div>
+
+<!-- Slide 2: Problem -->
+<div class="slide slide-problem">
+    <div class="content">
+        <div class="slide-label">The Problem</div>
+        <h2 class="slide-heading">Learning is broken for most students</h2>
+        <div class="problem-grid">
+            <div class="problem-card">
+                <div class="problem-number">01</div>
+                <h3 class="problem-title">One-size-fits-all</h3>
+                <p class="problem-desc">Traditional education delivers the same content to everyone, ignoring individual learning styles, pace, and interests.</p>
+            </div>
+            <div class="problem-card">
+                <div class="problem-number">02</div>
+                <h3 class="problem-title">No progress visibility</h3>
+                <p class="problem-desc">Students can't see how far they've come or what milestones they've achieved, leading to disengagement.</p>
+            </div>
+            <div class="problem-card">
+                <div class="problem-number">03</div>
+                <h3 class="problem-title">Resource overwhelm</h3>
+                <p class="problem-desc">Too many courses, too little guidance. Students don't know where to start or what to learn next.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 3: Solution -->
+<div class="slide slide-solution">
+    <div class="content">
+        <div class="text">
+            <div class="slide-label">Our Solution</div>
+            <h2 class="slide-heading">LearnMosaic: Your AI Learning Companion</h2>
+            <div class="solution-features">
+                <div class="feature-item">
+                    <div class="feature-icon"><span>1</span></div>
+                    <div class="feature-text">
+                        <h4>Personalized Onboarding</h4>
+                        <p>Tell us your goals, interests, and timeframe. We create a custom learning path.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><span>2</span></div>
+                    <div class="feature-text">
+                        <h4>AI-Powered Tutoring</h4>
+                        <p>Chat with an AI that understands your context and adapts to your learning style.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><span>3</span></div>
+                    <div class="feature-text">
+                        <h4>Visual Artifacts</h4>
+                        <p>Get diagrams, code examples, and visual aids generated in real-time.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon"><span>4</span></div>
+                    <div class="feature-text">
+                        <h4>Progress Tracking</h4>
+                        <p>Dynamic checklists and milestone celebrations keep you motivated.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="visual">
+            <svg width="400" height="400" viewBox="0 0 400 400">
+                <circle cx="200" cy="200" r="150" fill="none" stroke="#E63946" stroke-width="2"/>
+                <circle cx="200" cy="200" r="100" fill="none" stroke="#F4D35E" stroke-width="2"/>
+                <circle cx="200" cy="200" r="50" fill="#1D3557"/>
+                <text x="200" y="210" text-anchor="middle" fill="white" font-size="24" font-weight="600">AI</text>
+            </svg>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 4: Demo -->
+<div class="slide slide-demo">
+    <div class="content">
+        <div class="demo-header">
+            <div>
+                <div class="slide-label">Live Demo</div>
+                <h2 class="slide-heading" style="font-size: 48px;">See it in action</h2>
+            </div>
+        </div>
+        <div class="demo-window">
+            <div class="demo-titlebar">
+                <div class="demo-dot red"></div>
+                <div class="demo-dot yellow"></div>
+                <div class="demo-dot green"></div>
+            </div>
+            <div class="demo-content">
+                <div class="demo-chat">
+                    <div class="chat-message">
+                        <div class="chat-avatar">U</div>
+                        <div class="chat-bubble">Draw the solar system as an SVG</div>
+                    </div>
+                    <div class="chat-message">
+                        <div class="chat-avatar" style="background: var(--blue);">AI</div>
+                        <div class="chat-bubble">
+                            Sure! Here's a simple SVG diagram of the solar system, showing the sun and the eight planets in their orbits.
+                            <svg width="100%" height="120" viewBox="0 0 500 120" style="margin-top: 16px;">
+                                <circle cx="250" cy="60" r="40" fill="#F4D35E"/>
+                                <text x="250" y="65" text-anchor="middle" font-size="12" fill="#0D1117">Sun</text>
+                                <circle cx="50" cy="60" r="8" fill="#999"/>
+                                <circle cx="100" cy="60" r="10" fill="#E63946"/>
+                                <circle cx="160" cy="60" r="12" fill="#1D3557"/>
+                                <circle cx="340" cy="60" r="15" fill="#F4D35E"/>
+                                <circle cx="420" cy="60" r="10" fill="#1D3557"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="demo-sidebar">
+                    <h4 style="margin-bottom: 16px;">Checklist</h4>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                        <div style="width: 20px; height: 20px; background: var(--red); border-radius: 4px;"></div>
+                        <span style="font-size: 14px;">Learn about planets</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+                        <div style="width: 20px; height: 20px; background: var(--red); border-radius: 4px;"></div>
+                        <span style="font-size: 14px;">Understand orbits</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 20px; height: 20px; border: 2px solid #ccc; border-radius: 4px;"></div>
+                        <span style="font-size: 14px; color: #999;">Build a model</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 5: Tech Stack -->
+<div class="slide slide-tech">
+    <div class="content">
+        <div class="slide-label">Technology</div>
+        <h2 class="slide-heading">Built with modern tools</h2>
+        <div class="tech-grid">
+            <div class="tech-card">
+                <div class="tech-icon">⚛️</div>
+                <div class="tech-name">React 19</div>
+                <div class="tech-desc">Modern UI with hooks and concurrent features</div>
+            </div>
+            <div class="tech-card">
+                <div class="tech-icon">🎨</div>
+                <div class="tech-name">Tailwind CSS</div>
+                <div class="tech-desc">Utility-first styling with custom design system</div>
+            </div>
+            <div class="tech-card">
+                <div class="tech-icon">✨</div>
+                <div class="tech-name">Framer Motion</div>
+                <div class="tech-desc">Smooth animations and page transitions</div>
+            </div>
+            <div class="tech-card">
+                <div class="tech-icon">🤖</div>
+                <div class="tech-name">OpenRouter AI</div>
+                <div class="tech-desc">GPT-4o-mini for intelligent tutoring</div>
+            </div>
+            <div class="tech-card">
+                <div class="tech-icon">⚡</div>
+                <div class="tech-name">Express.js</div>
+                <div class="tech-desc">Fast REST API backend</div>
+            </div>
+            <div class="tech-card">
+                <div class="tech-icon">💾</div>
+                <div class="tech-name">PocketBase</div>
+                <div class="tech-desc">Lightweight SQLite database</div>
+            </div>
+            <div class="tech-card">
+                <div class="tech-icon">🎬</div>
+                <div class="tech-name">Vite</div>
+                <div class="tech-desc">Lightning-fast development server</div>
+            </div>
+            <div class="tech-card">
+                <div class="tech-icon">🎨</div>
+                <div class="tech-name">Bauhaus Design</div>
+                <div class="tech-desc">Custom design system with 4 themes</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 6: SDG -->
+<div class="slide slide-sdg">
+    <div class="content">
+        <div class="sdg-badge">
+            <div class="sdg-number">4</div>
+            <div class="sdg-text">QUALITY EDUCATION</div>
+        </div>
+        <div>
+            <div class="slide-label">United Nations SDG</div>
+            <h2 class="slide-heading">Aligned with Global Goals</h2>
+            <p style="font-size: 18px; color: #666; line-height: 1.8; max-width: 600px;">
+                LearnMosaic directly contributes to SDG 4 by providing personalized, 
+                AI-powered learning experiences that adapt to individual students. 
+                Our platform makes quality education accessible, engaging, and effective 
+                for learners of all ages and backgrounds.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Slide 7: Thank You -->
+<div class="slide slide-thankyou">
+    <div class="content">
+        <h2 class="thankyou-heading">Thank You</h2>
+        <p class="thankyou-sub">Questions?</p>
+        <p class="thankyou-link">github.com/SilverClover49/learnmosaic</p>
+    </div>
+</div>
+
+</body>
+</html>
