@@ -35,11 +35,22 @@ async function buildSystemPrompt(meta, message, sessionId, now, sessionDuration)
     ? `\n\n## Session Artifacts\n${artifacts.map(a => `- ${a.name} (${a.type})`).join('\n')}`
     : ''
 
-  return (tutorPrompt + '\n\n' + toolsPrompt + memoryContext + artifactContext)
+  const ageNum = meta.age != null ? Number(meta.age) : null
+  const toneInstruction = ageNum !== null && ageNum < 18
+    ? '\n\n## Tone & Communication Style\nThe student is a young learner. Use a warm, encouraging, and patient tone. Simplify explanations when needed. Use analogies and examples. Be supportive and positive. Avoid overwhelming them with too much information at once.'
+    : ''
+
+  const materials = meta.materials || []
+  const materialContext = materials.length > 0
+    ? `\n\n## Student-Provided Materials\nThese materials were provided by the student and should be treated as the PRIMARY reference — ~70% of your responses should draw from or reference these materials:\n${materials.map((m, i) => `\n### Material ${i + 1}: ${typeof m === 'string' ? m : m.name || 'Unnamed'}\n${typeof m === 'string' ? '' : `Type: ${m.type || 'unknown'}\nSize: ${m.size || 'unknown'}`}`).join('\n')}\n\n**Important**: Center your teaching around these materials. Use external knowledge only to supplement or clarify what the student has provided.`
+    : ''
+
+  return (tutorPrompt + toneInstruction + materialContext + '\n\n' + toolsPrompt + memoryContext + artifactContext)
     .replace(/{name}/g, meta.name)
-    .replace(/{age}/g, meta.age)
+    .replace(/{age}/g, ageNum != null ? String(ageNum) : 'unknown')
     .replace(/{interests}/g, (meta.interests || []).join(', '))
     .replace(/{goal}/g, meta.goal)
+    .replace(/{sub_goal}/g, meta.subGoal || '')
     .replace(/{timeframe}/g, meta.timeframe || 'flexible')
     .replace(/{curriculum_summary}/g, (meta.curriculum || '').slice(0, 800))
     .replace(/{checklist}/g, meta.checklist || '')

@@ -50,20 +50,25 @@ router.get('/:id', async (req, res) => {
 
 // Create session
 router.post('/', async (req, res) => {
-  const { userId, name, age, interests, goal, timeframe, materials } = req.body
-  if (!name || !age || !goal) return res.status(400).json({ error: 'Missing required fields' })
-  const ageNum = Number(age)
-  if (!Number.isInteger(ageNum) || ageNum < 1 || ageNum > 120) return res.status(400).json({ error: 'Age must be a number between 1 and 120' })
+  const { userId, name, age, interests, goal, subGoal, timeframe, materials } = req.body
+  if (!goal) return res.status(400).json({ error: 'Missing required fields' })
+  const displayName = name || 'Learner'
+  let ageNum = null
+  if (age != null && age !== '') {
+    ageNum = Number(age)
+    if (!Number.isFinite(ageNum) || !Number.isInteger(ageNum) || ageNum < 1 || ageNum > 120)
+      return res.status(400).json({ error: 'Age must be a whole number between 1 and 120' })
+  }
 
   const now = new Date().toISOString()
 
   // Generate curriculum via AI
   const curriculumPrompt = await loadPrompt('curriculum.md')
   const curriculumSystem = curriculumPrompt
-    .replace('{name}', name)
-    .replace('{age}', String(ageNum))
+    .replace('{name}', displayName)
+    .replace('{age}', ageNum != null ? String(ageNum) : 'unknown')
     .replace('{interests}', (interests || []).join(', '))
-    .replace('{goal}', goal)
+    .replace('{goal}', goal + (subGoal ? ` — ${subGoal}` : ''))
     .replace('{timeframe}', timeframe || 'flexible')
 
   const settings = await getSettings()
@@ -71,7 +76,7 @@ router.post('/', async (req, res) => {
   try {
     const result = await callAI({
       system: curriculumSystem,
-      messages: [{ role: 'user', content: `Generate a personalized curriculum for ${name} to achieve: ${goal}` }],
+      messages: [{ role: 'user', content: `Generate a personalized curriculum for ${displayName} to achieve: ${fullGoal}` }],
       settings
     })
     curriculum = result.content || ''
@@ -82,29 +87,32 @@ router.post('/', async (req, res) => {
   // Generate checklist via AI
   const checklistPrompt = await loadPrompt('checklist.md')
   const checklistSystem = checklistPrompt
-    .replace('{goal}', goal)
+    .replace('{goal}', fullGoal)
     .replace('{curriculum_summary}', curriculum.slice(0, 1000))
 
   let checklist = ''
   try {
     const result = await callAI({
       system: checklistSystem,
-      messages: [{ role: 'user', content: `Generate a checklist for achieving: ${goal}` }],
+      messages: [{ role: 'user', content: `Generate a checklist for achieving: ${fullGoal}` }],
       settings
     })
     checklist = result.content || ''
   } catch (e) {
-    checklist = `# Checklist: ${goal}\n\n- [ ] ${goal}`
+    checklist = `# Checklist: ${fullGoal}\n\n- [ ] ${fullGoal}`
   }
 
-  const thinkingBoard = `# Thinking Board\n\n**Goal**: ${goal}\n**Started**: ${now}\n\n## Initial Thoughts\n\nThe AI tutor uses this space to log thoughts and observations.\n\n---\n`
+  const fullGoal = goal + (subGoal ? ` — ${subGoal}` : '')
+  const thinkingBoard = `# Thinking Board\n\n**Goal**: ${fullGoal}\n**Started**: ${now}\n\n## Initial Thoughts\n\nThe AI tutor uses this space to log thoughts and observations.\n\n---\n`
 
   // Save to PocketBase
   const session = await pb.createSession({
     profileId: userId || 'anon',
-    name, age: ageNum,
+    name: displayName, age: ageNum,
     interests: interests || [],
-    goal, timeframe: timeframe || 'flexible',
+    goal: fullGoal,
+    timeframe: timeframe || 'flexible',
+    subGoal: subGoal || '',
     status: 'active',
     materials: materials || [],
     curriculum, thinkingBoard, checklist

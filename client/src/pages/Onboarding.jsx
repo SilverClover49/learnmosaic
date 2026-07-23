@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import PageTransition from '../components/layout/PageTransition'
 import Button from '../components/ui/MagneticButton'
 import Input from '../components/ui/Input'
@@ -23,16 +23,28 @@ const goals = [
 ]
 
 const stepIcons = [
-  // Circle - identity
   <svg key="0" width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12" stroke="currentColor" strokeWidth="2"/><circle cx="14" cy="10" r="4" fill="currentColor"/><path d="M6 24c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" strokeWidth="2"/></svg>,
-  // Triangle - interests
   <svg key="1" width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M14 3L26 25H2L14 3Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/><circle cx="14" cy="17" r="3" fill="currentColor"/></svg>,
-  // Square - goal
   <svg key="2" width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="4" y="4" width="20" height="20" stroke="currentColor" strokeWidth="2"/><path d="M10 14l3 3 5-6" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter"/></svg>,
-  // Diamond - timeframe
   <svg key="3" width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M14 2L26 14L14 26L2 14L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/><circle cx="14" cy="14" r="4" fill="currentColor"/></svg>,
-  // Star - review
   <svg key="4" width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M14 2l3.5 7.5L26 11l-6 5.5L21.5 25 14 20.5 6.5 25 8 16.5 2 11l8.5-1.5L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/></svg>
+]
+
+const goalPrompts = {
+  'Learn a new skill from scratch': "What skill would you like to learn? Tell me what excites you about it.",
+  'Prepare for an exam or certification': "Which exam or certification are you preparing for? When is it?",
+  'Deepen knowledge in a field I already know': "What field do you want to go deeper in? What level are you at now?",
+  'Complete a specific project': "What project do you want to build? Describe what you have in mind.",
+  'Explore a subject out of curiosity': "What subject are you curious about? What got you interested?"
+}
+
+const timeframes = [
+  { value: '1 day', label: '1', desc: 'Quick session' },
+  { value: '1 week', label: '7', desc: 'One week' },
+  { value: '1 month', label: '30', desc: 'One month' },
+  { value: '3 months', label: '90', desc: 'Deep dive' },
+  { value: '6 months', label: '180', desc: 'Long journey' },
+  { value: 'flexible', label: '\u221e', desc: 'No rush' }
 ]
 
 const fadeSlide = {
@@ -67,17 +79,43 @@ function FloatingShape({ type, size, color, x, y, delay }) {
 
 export default function Onboarding() {
   const navigate = useNavigate()
+  const [existingUser, setExistingUser] = useState(null)
   const [step, setStep] = useState(0)
   const [loading, setLoading] = useState(false)
   const [loadingMsg, setLoadingMsg] = useState('')
   const [loadingProgress, setLoadingProgress] = useState(0)
   const [profile, setProfile] = useState({
     name: '', age: '', interests: [], goal: '', customGoal: '',
-    timeframe: '', customInterest: ''
+    subGoal: '', timeframe: '', customTimeframe: '', customInterest: ''
   })
+  const [materials, setMaterials] = useState([])
+  const [showMaterials, setShowMaterials] = useState(false)
   const [error, setError] = useState('')
+  const fileInputRef = useRef(null)
 
-  const totalSteps = 5
+  const existingUserRaw = (() => {
+    try { return JSON.parse(localStorage.getItem('learnmosaic-user')) } catch { return null }
+  })()
+
+  useEffect(() => {
+    if (existingUserRaw) {
+      setExistingUser(existingUserRaw)
+      setStep(0)
+    }
+  }, [])
+
+  const stepOffset = existingUser ? 1 : 0
+  const totalSteps = existingUser ? 6 : 6
+
+  const stepLabels = existingUser
+    ? ['Interests', 'Goal', 'Refine', 'Timeframe', 'Review']
+    : ['You', 'Interests', 'Goal', 'Refine', 'Timeframe', 'Review']
+
+  const stepIconsList = existingUser
+    ? stepIcons.slice(1)
+    : stepIcons
+
+  const getDisplayStep = () => existingUser ? step : step
 
   const update = (field, value) => {
     setProfile(prev => ({ ...prev, [field]: value }))
@@ -94,18 +132,40 @@ export default function Onboarding() {
   }
 
   const canProceed = () => {
+    if (existingUser) {
+      switch (step) {
+        case 0: return profile.interests.length > 0 || profile.customInterest.trim()
+        case 1: return profile.goal || profile.customGoal.trim()
+        case 2: return profile.subGoal.trim().length >= 3
+        case 3: return profile.timeframe || profile.customTimeframe.trim()
+        case 4: return true
+        default: return true
+      }
+    }
     switch (step) {
       case 0: return profile.name.trim() && profile.age.trim()
       case 1: return profile.interests.length > 0 || profile.customInterest.trim()
       case 2: return profile.goal || profile.customGoal.trim()
-      case 3: return profile.timeframe.trim()
+      case 3: return profile.subGoal.trim().length >= 3
+      case 4: return profile.timeframe || profile.customTimeframe.trim()
+      case 5: return true
       default: return true
     }
   }
 
+  const handleFileSelect = (e) => {
+    const files = Array.from(e.target.files || [])
+    setMaterials(prev => [...prev, ...files])
+  }
+
+  const removeMaterial = (idx) => {
+    setMaterials(prev => prev.filter((_, i) => i !== idx))
+  }
+
   const nextStep = () => {
     if (!canProceed()) { setError('Please fill in all fields'); return }
-    if (step < totalSteps - 1) setStep(s => s + 1)
+    const lastStep = existingUser ? 4 : 5
+    if (step < lastStep) setStep(s => s + 1)
     else handleCreate()
   }
 
@@ -117,20 +177,42 @@ export default function Onboarding() {
     const allInterests = [...profile.interests]
     if (profile.customInterest.trim()) allInterests.push(profile.customInterest.trim())
     const finalGoal = profile.goal === 'custom' ? profile.customGoal : profile.goal
+    const finalTimeframe = profile.timeframe === 'custom' ? profile.customTimeframe : profile.timeframe
 
     try {
-      setLoadingMsg('Creating your profile...'); setLoadingProgress(25)
-      const user = await api.createUser({ name: profile.name, age: parseInt(profile.age) })
-      setLoadingMsg('Designing your curriculum...'); setLoadingProgress(50)
+      let user = existingUser
+      if (!user) {
+        setLoadingMsg('Creating your profile...'); setLoadingProgress(15)
+        user = await api.createUser({ name: profile.name, age: parseInt(profile.age) })
+        localStorage.setItem('learnmosaic-user', JSON.stringify(user))
+      }
+
+      setLoadingMsg('Designing your curriculum...'); setLoadingProgress(35)
       const session = await api.createSession({
-        userId: user.id, name: profile.name, age: parseInt(profile.age),
-        interests: allInterests, goal: finalGoal, timeframe: profile.timeframe
+        userId: user.id, name: existingUser ? 'Learning Session' : profile.name,
+        age: existingUser ? existingUser.age : parseInt(profile.age),
+        interests: allInterests, goal: finalGoal,
+        subGoal: profile.subGoal,
+        timeframe: finalTimeframe
       })
-      setLoadingMsg('Setting up your personalized dashboard...'); setLoadingProgress(80)
-      localStorage.setItem('learnmosaic-user', JSON.stringify(user))
       localStorage.setItem('learnmosaic-last-session', session.id)
-      setLoadingProgress(100); setLoadingMsg('Ready! Taking you there...')
-      setTimeout(() => navigate(`/session/${session.id}`), 600)
+
+      // Upload materials if any
+      if (materials.length > 0) {
+        setLoadingMsg('Uploading your materials...'); setLoadingProgress(65)
+        for (let i = 0; i < materials.length; i++) {
+          const form = new FormData()
+          form.append('file', materials[i])
+          await fetch(`/api/sessions/${session.id}/upload`, { method: 'POST', body: form })
+          setLoadingProgress(65 + Math.round((i + 1) / materials.length * 20))
+        }
+      }
+
+      setLoadingProgress(90); setLoadingMsg('Setting up your dashboard...')
+      setTimeout(() => {
+        setLoadingProgress(100); setLoadingMsg('Ready! Taking you there...')
+        setTimeout(() => navigate(`/session/${session.id}`), 500)
+      }, 300)
     } catch (e) {
       setError(e.message); setLoading(false)
     }
@@ -144,7 +226,6 @@ export default function Onboarding() {
           <div /><div /><div /><div /><div />
         </div>
 
-        {/* Floating background shapes */}
         <FloatingShape type="circle" size={120} color="var(--bauhaus-yellow)" x="10%" y="20%" delay={0} />
         <FloatingShape type="square" size={80} color="var(--bauhaus-red)" x="80%" y="30%" delay={0.2} />
         <FloatingShape type="triangle" size={100} color="var(--bauhaus-blue)" x="70%" y="70%" delay={0.4} />
@@ -170,13 +251,17 @@ export default function Onboarding() {
           </motion.p>
           <ProgressBar value={loadingProgress} color="red" className="mb-4" />
           <p className="text-xs text-[var(--ink-muted)] uppercase tracking-wider">
-            {loadingProgress < 50 ? 'Analyzing your goals...' :
-             loadingProgress < 80 ? 'Generating curriculum...' : 'Almost there...'}
+            {loadingProgress < 35 ? 'Analyzing your goals...' :
+             loadingProgress < 65 ? 'Generating curriculum...' :
+             loadingProgress < 90 ? 'Uploading materials...' : 'Almost there...'}
           </p>
         </div>
       </PageTransition>
     )
   }
+
+  const lastStep = existingUser ? 4 : 5
+  const displayStep = step
 
   return (
     <PageTransition className="min-h-[100dvh] flex flex-col relative overflow-hidden">
@@ -185,35 +270,33 @@ export default function Onboarding() {
         <div /><div /><div /><div /><div />
       </div>
 
-      {/* Top bar with back button */}
       <div className="bg-[var(--bauhaus-black)] text-[var(--bauhaus-white)] px-6 py-3 flex items-center justify-between relative z-20">
         <motion.button
           whileHover={{ x: -3 }}
           onClick={() => navigate('/dashboard')}
           className="text-xs uppercase tracking-wider hover:text-[var(--bauhaus-yellow)] transition-colors cursor-pointer"
         >
-          ← Dashboard
+          {'\u2190 Dashboard'}
         </motion.button>
         <span className="text-xs font-medium uppercase tracking-wider opacity-60">
-          New Session
+          {existingUser ? 'New Session' : 'Get Started'}
         </span>
         <div className="w-20" />
       </div>
 
       <div className="flex-1 flex flex-col lg:flex-row relative z-10">
-        {/* Left column - Step indicator (20%) */}
         <div className="lg:w-[20%] p-8 border-r-[4px] border-[var(--bauhaus-black)] bg-[var(--surface)]/80 backdrop-blur-sm hidden lg:flex flex-col justify-between">
           <div>
             <span className="text-xs font-medium uppercase tracking-wider text-[var(--ink-muted)]">
-              Step {step + 1} of {totalSteps}
+              Step {displayStep + 1} of {totalSteps}
             </span>
             <div className="mt-4 text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--bauhaus-red)' }}>
-              {Math.round(((step + 1) / totalSteps) * 100)}%
+              {Math.round(((displayStep + 1) / totalSteps) * 100)}%
             </div>
           </div>
 
           <div className="space-y-6">
-            {['You', 'Interests', 'Goal', 'Timeframe', 'Review'].map((label, i) => (
+            {stepLabels.map((label, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, x: -20 }}
@@ -223,13 +306,13 @@ export default function Onboarding() {
               >
                 <motion.div
                   animate={{
-                    backgroundColor: i === step ? 'var(--bauhaus-red)' : i < step ? 'var(--bauhaus-black)' : 'transparent',
-                    scale: i === step ? 1.2 : 1
+                    backgroundColor: i === displayStep ? 'var(--bauhaus-red)' : i < displayStep ? 'var(--bauhaus-black)' : 'transparent',
+                    scale: i === displayStep ? 1.2 : 1
                   }}
                   transition={{ duration: 0.3 }}
                   className="w-4 h-4 flex items-center justify-center border-[2px] border-[var(--bauhaus-black)]"
                 >
-                  {i < step && (
+                  {i < displayStep && (
                     <motion.svg
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
@@ -241,7 +324,7 @@ export default function Onboarding() {
                   )}
                 </motion.div>
                 <span className={`text-xs uppercase tracking-wider transition-all duration-200 ${
-                  i === step ? 'font-bold' : 'text-[var(--ink-muted)]'
+                  i === displayStep ? 'font-bold' : 'text-[var(--ink-muted)]'
                 }`}>
                   {label}
                 </span>
@@ -254,20 +337,18 @@ export default function Onboarding() {
           </div>
         </div>
 
-        {/* Right column - Content (80%) */}
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-12">
           <div className="w-full max-w-lg mx-auto">
-            {/* Mobile progress */}
             <div className="lg:hidden mb-8">
               <div className="flex justify-between items-center mb-3">
                 <span className="text-xs font-medium uppercase tracking-wider text-[var(--ink-muted)]">
-                  Step {step + 1} of {totalSteps}
+                  Step {displayStep + 1} of {totalSteps}
                 </span>
                 <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--bauhaus-red)' }}>
-                  {Math.round(((step + 1) / totalSteps) * 100)}%
+                  {Math.round(((displayStep + 1) / totalSteps) * 100)}%
                 </span>
               </div>
-              <ProgressBar value={((step + 1) / totalSteps) * 100} color="red" />
+              <ProgressBar value={((displayStep + 1) / totalSteps) * 100} color="red" />
             </div>
 
             <AnimatePresence mode="wait">
@@ -279,8 +360,8 @@ export default function Onboarding() {
                 exit="exit"
                 transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
               >
-                {/* Step 0: Name & Age */}
-                {step === 0 && (
+                {/* Step 0: Name & Age (only if no existing user) */}
+                {!existingUser && step === 0 && (
                   <div className="text-center">
                     <motion.div
                       initial={{ scale: 0, rotate: -90 }}
@@ -302,8 +383,8 @@ export default function Onboarding() {
                   </div>
                 )}
 
-                {/* Step 1: Interests */}
-                {step === 1 && (
+                {/* Step: Interests */}
+                {(existingUser ? step === 0 : step === 1) && (
                   <div className="text-center">
                     <motion.div
                       initial={{ scale: 0, rotate: 90 }}
@@ -341,8 +422,8 @@ export default function Onboarding() {
                   </div>
                 )}
 
-                {/* Step 2: Goal */}
-                {step === 2 && (
+                {/* Step: Goal (with resource upload toggle) */}
+                {(existingUser ? step === 1 : step === 2) && (
                   <div className="text-center">
                     <motion.div
                       initial={{ scale: 0, rotate: -45 }}
@@ -356,8 +437,8 @@ export default function Onboarding() {
                       </svg>
                     </motion.div>
                     <h2 className="type-h2 mb-3">WHAT'S YOUR GOAL?</h2>
-                    <p className="text-[var(--ink-muted)] mb-8">What do you want to achieve?</p>
-                    <div className="space-y-3">
+                    <p className="text-[var(--ink-muted)] mb-6">What do you want to achieve?</p>
+                    <div className="space-y-3 mb-6">
                       {goals.map((item, idx) => (
                         <motion.button
                           key={item}
@@ -402,11 +483,123 @@ export default function Onboarding() {
                         )}
                       </AnimatePresence>
                     </div>
+
+                    {/* Material upload toggle */}
+                    <div className="border-t-[2px] border-[var(--border-color)] pt-5">
+                      <motion.button
+                        onClick={() => setShowMaterials(!showMaterials)}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="flex items-center gap-3 mx-auto px-5 py-3 text-sm font-medium uppercase tracking-wider transition-all duration-200 cursor-pointer border-[2px] border-[var(--bauhaus-black)]
+                          bg-[var(--bauhaus-white)] hover:bg-[var(--surface-alt)]"
+                      >
+                        <motion.div
+                          animate={{ rotate: showMaterials ? 45 : 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                            <path d="M7 1v12M1 7h12" stroke="var(--bauhaus-black)" strokeWidth="2" strokeLinecap="square"/>
+                          </svg>
+                        </motion.div>
+                        ADD YOUR OWN MATERIALS
+                      </motion.button>
+
+                      <AnimatePresence>
+                        {showMaterials && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0, y: -10 }}
+                            animate={{ height: 'auto', opacity: 1, y: 0 }}
+                            exit={{ height: 0, opacity: 0, y: -10 }}
+                            transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
+                            className="overflow-hidden mt-4"
+                          >
+                            <div
+                              className="border-[3px] border-dashed border-[var(--bauhaus-black)] p-6 rounded-[var(--radius-lg)] cursor-pointer hover:bg-[var(--surface-alt)] transition-all duration-300"
+                              style={{ background: 'var(--surface)' }}
+                              onClick={() => fileInputRef.current?.click()}
+                              onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = 'var(--bauhaus-red)' }}
+                              onDragLeave={(e) => { e.currentTarget.style.borderColor = 'var(--bauhaus-black)' }}
+                              onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = 'var(--bauhaus-black)'; handleFileSelect(e) }}
+                            >
+                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--bauhaus-black)" strokeWidth="1.5" className="mx-auto mb-3">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                              </svg>
+                              <p className="text-sm font-medium mb-1">Drop your learning materials here</p>
+                              <p className="text-xs text-[var(--ink-muted)]">PDF, DOC, TXT, images, markdown</p>
+                              <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileSelect} accept=".pdf,.doc,.docx,.txt,.md,.png,.jpg,.jpeg,.mp4,.mov" />
+                            </div>
+
+                            <AnimatePresence>
+                              {materials.map((file, idx) => (
+                                <motion.div
+                                  key={`${file.name}-${idx}`}
+                                  initial={{ opacity: 0, x: -20, scale: 0.9 }}
+                                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                                  exit={{ opacity: 0, x: 20, scale: 0.9 }}
+                                  transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
+                                  className="flex items-center gap-3 mt-2 px-4 py-3 border-[2px] border-[var(--bauhaus-black)] bg-[var(--surface)]"
+                                >
+                                  <div className="w-8 h-8 bg-[var(--bauhaus-yellow)] flex items-center justify-center flex-shrink-0">
+                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                      <path d="M3 1h5l4 4v8H3V1Z" stroke="var(--bauhaus-black)" strokeWidth="1.5"/>
+                                      <path d="M8 1v4h4" stroke="var(--bauhaus-black)" strokeWidth="1.5"/>
+                                    </svg>
+                                  </div>
+                                  <span className="text-sm truncate flex-1 text-left">{file.name}</span>
+                                  <button
+                                    onClick={() => removeMaterial(idx)}
+                                    className="text-[var(--bauhaus-red)] hover:opacity-70 transition-opacity cursor-pointer flex-shrink-0"
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                      <path d="M2 2l10 10M12 2l-10 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square"/>
+                                    </svg>
+                                  </button>
+                                </motion.div>
+                              ))}
+                            </AnimatePresence>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   </div>
                 )}
 
-                {/* Step 3: Timeframe */}
-                {step === 3 && (
+                {/* Step: Goal Refinement (AI-guided) */}
+                {(existingUser ? step === 2 : step === 3) && (profile.goal || profile.customGoal) && (
+                  <div className="text-center">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
+                      className="w-20 h-20 mx-auto mb-8 bg-[var(--bauhaus-blue)] flex items-center justify-center relative"
+                    >
+                      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <circle cx="16" cy="16" r="11" stroke="var(--bauhaus-white)" strokeWidth="2"/>
+                        <path d="M16 10v6l4 2" stroke="var(--bauhaus-white)" strokeWidth="2" strokeLinecap="square"/>
+                      </svg>
+                    </motion.div>
+                    <h2 className="type-h2 mb-3">TELL ME MORE</h2>
+                    <div className="p-[2px] rounded-[var(--radius-lg)] mb-6" style={{ background: 'var(--glass-border)' }}>
+                      <div className="rounded-[calc(var(--radius-lg)-2px)] p-5 text-left text-sm leading-relaxed"
+                        style={{ backgroundColor: 'var(--surface)', boxShadow: 'var(--shadow-inner)' }}>
+                        <p className="text-[var(--ink)]">
+                          {goalPrompts[profile.goal] || 'Tell me more about what you want to learn:'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <Input
+                        placeholder="Type your answer here..."
+                        value={profile.subGoal}
+                        onChange={e => update('subGoal', e.target.value)}
+                        autoFocus
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Step: Timeframe (with custom option) */}
+                {(existingUser ? step === 3 : step === 4) && (
                   <div className="text-center">
                     <motion.div
                       initial={{ scale: 0, rotate: 180 }}
@@ -420,22 +613,15 @@ export default function Onboarding() {
                       </svg>
                     </motion.div>
                     <h2 className="type-h2 mb-3">WHAT'S YOUR TIMEFRAME?</h2>
-                    <p className="text-[var(--ink-muted)] mb-8">How long do you want to spend on this?</p>
-                    <div className="grid grid-cols-2 gap-0">
-                      {[
-                        { value: '1 day', label: '1', desc: 'Quick session' },
-                        { value: '1 week', label: '7', desc: 'One week' },
-                        { value: '1 month', label: '30', desc: 'One month' },
-                        { value: '3 months', label: '90', desc: 'Deep dive' },
-                        { value: '6 months', label: '180', desc: 'Long journey' },
-                        { value: 'flexible', label: '∞', desc: 'No rush' }
-                      ].map((t, idx) => (
+                    <p className="text-[var(--ink-muted)] mb-6">How long do you want to spend on this?</p>
+                    <div className="grid grid-cols-2 gap-0 mb-4">
+                      {timeframes.map((t, idx) => (
                         <motion.button
                           key={t.value}
                           initial={{ opacity: 0, scale: 0.8 }}
                           animate={{ opacity: 1, scale: 1 }}
                           transition={{ delay: idx * 0.06, duration: 0.3 }}
-                          onClick={() => update('timeframe', t.value)}
+                          onClick={() => { update('timeframe', t.value); update('customTimeframe', '') }}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.97 }}
                           className={`px-4 py-5 text-center transition-all duration-200 cursor-pointer border-[2px] border-[var(--bauhaus-black)]
@@ -449,11 +635,35 @@ export default function Onboarding() {
                         </motion.button>
                       ))}
                     </div>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => update('timeframe', 'custom')}
+                      className={`w-full px-5 py-3 text-sm transition-all duration-200 cursor-pointer uppercase tracking-wider font-medium border-[2px] border-[var(--bauhaus-black)]
+                        ${profile.timeframe === 'custom'
+                          ? 'bg-[var(--bauhaus-black)] text-[var(--bauhaus-white)]'
+                          : 'bg-[var(--bauhaus-white)] text-[var(--ink)] hover:bg-[var(--surface-alt)]'}`}
+                    >
+                      CUSTOM...
+                    </motion.button>
+                    <AnimatePresence>
+                      {profile.timeframe === 'custom' && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className="mt-3"
+                        >
+                          <Input placeholder="e.g., 2 weeks, by December..." value={profile.customTimeframe} onChange={e => update('customTimeframe', e.target.value)} autoFocus />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 )}
 
-                {/* Step 4: Review */}
-                {step === 4 && (
+                {/* Step: Review */}
+                {(existingUser ? step === 4 : step === 5) && (
                   <div className="text-center">
                     <motion.div
                       initial={{ scale: 0 }}
@@ -466,7 +676,7 @@ export default function Onboarding() {
                       </svg>
                     </motion.div>
                     <h2 className="type-h2 mb-3">READY TO BEGIN?</h2>
-                    <p className="text-[var(--ink-muted)] mb-8">Here's your learning profile:</p>
+                    <p className="text-[var(--ink-muted)] mb-8">Here's your learning plan:</p>
                     <motion.div
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -474,27 +684,36 @@ export default function Onboarding() {
                       className="border-[4px] border-[var(--bauhaus-black)] mb-8 text-left"
                     >
                       <div className="bg-[var(--bauhaus-black)] text-[var(--bauhaus-white)] px-5 py-3 text-xs font-bold uppercase tracking-wider">
-                        Your Profile
+                        Your Plan
                       </div>
                       <div className="p-5 space-y-3">
-                        {[
+                        {!existingUser && [
                           { label: 'Name', value: profile.name },
                           { label: 'Age', value: profile.age },
-                          { label: 'Interests', value: profile.interests.join(', ') || profile.customInterest },
-                          { label: 'Goal', value: profile.goal === 'custom' ? profile.customGoal : profile.goal },
-                          { label: 'Timeframe', value: profile.timeframe }
                         ].map((item, i) => (
-                          <motion.div
-                            key={item.label}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.3 + i * 0.08 }}
-                            className="flex justify-between py-2 border-b border-[var(--border-color)] last:border-0"
-                          >
+                          <motion.div key={item.label} className="flex justify-between py-2 border-b border-[var(--border-color)] last:border-0"
+                            initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 + i * 0.08 }}>
                             <span className="text-[var(--ink-muted)] text-sm uppercase tracking-wider">{item.label}</span>
                             <span className="font-medium text-right max-w-[60%]">{item.value}</span>
                           </motion.div>
                         ))}
+                        {[
+                          { label: 'Goal', value: profile.goal === 'custom' ? profile.customGoal : profile.goal },
+                          { label: 'Focus', value: profile.subGoal },
+                          { label: 'Interests', value: profile.interests.join(', ') || profile.customInterest },
+                          { label: 'Timeframe', value: profile.timeframe === 'custom' ? profile.customTimeframe : profile.timeframe },
+                        ].map((item, i) => (
+                          <motion.div key={item.label} className="flex justify-between py-2 border-b border-[var(--border-color)] last:border-0"
+                            initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 + i * 0.08 }}>
+                            <span className="text-[var(--ink-muted)] text-sm uppercase tracking-wider">{item.label}</span>
+                            <span className="font-medium text-right max-w-[60%]">{item.value}</span>
+                          </motion.div>
+                        ))}
+                        <motion.div className="flex justify-between py-2"
+                          initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 }}>
+                          <span className="text-[var(--ink-muted)] text-sm uppercase tracking-wider">Materials</span>
+                          <span className="font-medium text-right">{materials.length > 0 ? `${materials.length} files` : 'None'}</span>
+                        </motion.div>
                       </div>
                     </motion.div>
                   </div>
@@ -502,20 +721,19 @@ export default function Onboarding() {
               </motion.div>
             </AnimatePresence>
 
-            {/* Navigation */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.4 }}
               className="flex justify-between mt-10"
             >
-              {step > 0 ? (
+              {step > (existingUser ? 0 : 0) ? (
                 <Button variant="ghost" onClick={() => setStep(s => s - 1)}>
-                  ← BACK
+                  {'\u2190 BACK'}
                 </Button>
               ) : <div />}
               <Button onClick={nextStep} disabled={!canProceed()}>
-                {step === totalSteps - 1 ? 'BEGIN LEARNING' : 'CONTINUE →'}
+                {step === lastStep ? 'BEGIN LEARNING' : 'CONTINUE \u2192'}
               </Button>
             </motion.div>
 
