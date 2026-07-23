@@ -8,6 +8,7 @@ import { toast } from '../components/ui/Toast'
 import FileUploader from '../components/session/FileUploader'
 import ArtifactRenderer from '../components/session/ArtifactRenderer'
 import SelectionToolbar from '../components/session/SelectionToolbar'
+import ColorPicker from '../components/visuals/ColorPicker'
 import ReactMarkdown from 'react-markdown'
 import AmbientBackground from '../components/visuals/AmbientBackground'
 import { api } from '../lib/api'
@@ -40,6 +41,7 @@ export default function Session() {
   const [clock, setClock] = useState(new Date())
   const [sessionSeconds, setSessionSeconds] = useState(0)
   const [sessionStarted, setSessionStarted] = useState(null)
+  const [showPicker, setShowPicker] = useState(false)
   const chatEnd = useRef(null)
   const chatContainerRef = useRef(null)
 
@@ -102,7 +104,12 @@ export default function Session() {
         currentTime: new Date().toISOString(),
         sessionDuration: sessionStarted ? Math.floor((Date.now() - sessionStarted) / 1000) : 0
       })
-      setChat(prev => [...prev, { role: 'assistant', content: data.reply, timestamp: new Date().toISOString() }])
+      setChat(prev => [...prev, {
+        role: 'assistant',
+        content: data.reply,
+        blocks: data.blocks || [],
+        timestamp: new Date().toISOString()
+      }])
       if (data.milestones) setSession(prev => ({ ...prev, milestones: data.milestones }))
     } catch {
       setChat(prev => [...prev, { role: 'assistant', content: 'Sorry, I had trouble responding. Try again?', timestamp: new Date().toISOString() }])
@@ -147,29 +154,72 @@ export default function Session() {
     } catch {}
   }
 
-  const renderMessage = (content, role) => {
+  const renderMessage = (content, role, blocks) => {
     const parts = content.split(/(```[\s\S]*?```)/g)
-    return parts.map((part, i) => {
-      if (part.startsWith('```')) {
-        const match = part.match(/```(\w*)\n([\s\S]*?)```/)
-        if (match) {
-          return <ArtifactRenderer key={i} language={match[1] || 'text'} code={match[2]} />
-        }
-      }
-      const isUser = role === 'user'
-      return <div key={i} className="prose prose-invert max-w-none text-sm leading-relaxed" style={{
-        '--tw-prose-body': isUser ? 'var(--bauhaus-white)' : 'var(--ink)',
-        '--tw-prose-bold': isUser ? 'var(--bauhaus-white)' : 'var(--ink)',
-        '--tw-prose-headings': isUser ? 'var(--bauhaus-white)' : 'var(--ink)',
-        '--tw-prose-links': isUser ? 'var(--bauhaus-yellow)' : 'var(--accent)',
-        '--tw-prose-counters': isUser ? 'rgba(255,255,255,0.6)' : undefined,
-        '--tw-prose-bullets': isUser ? 'rgba(255,255,255,0.6)' : undefined,
-        '--tw-prose-hr': isUser ? 'rgba(255,255,255,0.2)' : undefined,
-        '--tw-prose-quotes': isUser ? 'rgba(255,255,255,0.8)' : undefined,
-        '--tw-prose-quote-borders': isUser ? 'var(--bauhaus-yellow)' : undefined,
-        '--tw-prose-code': isUser ? 'var(--bauhaus-yellow)' : undefined,
-      }}><ReactMarkdown>{part}</ReactMarkdown></div>
-    })
+    return (
+      <>
+        {parts.map((part, i) => {
+          if (part.startsWith('```')) {
+            const match = part.match(/```(\w*)\n([\s\S]*?)```/)
+            if (match) {
+              return <ArtifactRenderer key={i} language={match[1] || 'text'} code={match[2]} />
+            }
+          }
+          const isUser = role === 'user'
+          return <div key={i} className="prose prose-invert max-w-none text-sm leading-relaxed" style={{
+            '--tw-prose-body': isUser ? 'var(--bauhaus-white)' : 'var(--ink)',
+            '--tw-prose-bold': isUser ? 'var(--bauhaus-white)' : 'var(--ink)',
+            '--tw-prose-headings': isUser ? 'var(--bauhaus-white)' : 'var(--ink)',
+            '--tw-prose-links': isUser ? 'var(--bauhaus-yellow)' : 'var(--accent)',
+            '--tw-prose-counters': isUser ? 'rgba(255,255,255,0.6)' : undefined,
+            '--tw-prose-bullets': isUser ? 'rgba(255,255,255,0.6)' : undefined,
+            '--tw-prose-hr': isUser ? 'rgba(255,255,255,0.2)' : undefined,
+            '--tw-prose-quotes': isUser ? 'rgba(255,255,255,0.8)' : undefined,
+            '--tw-prose-quote-borders': isUser ? 'var(--bauhaus-yellow)' : undefined,
+            '--tw-prose-code': isUser ? 'var(--bauhaus-yellow)' : undefined,
+          }}><ReactMarkdown>{part}</ReactMarkdown></div>
+        })}
+        {blocks && blocks.map((block, i) => (
+          <div key={`block-${i}`} className="mt-4">
+            {block.type === 'svg' && (
+              <ArtifactRenderer language="svg" code={block.code} />
+            )}
+            {block.type === 'image' && (
+              <div className="border-[3px] border-[var(--bauhaus-black)] overflow-hidden">
+                <img src={block.url} alt={block.prompt || 'Generated image'} className="w-full h-auto max-h-[60vh] object-contain" />
+              </div>
+            )}
+            {block.type === 'search' && block.data && block.data.results && (
+              <div className="border-[2px] border-[var(--bauhaus-black)] p-4 bg-[var(--surface-alt)]">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--ink-muted)] mb-3">Search Results</div>
+                {block.data.abstract && (
+                  <p className="text-xs text-[var(--ink-muted)] mb-3 italic">{block.data.abstract}</p>
+                )}
+                <div className="space-y-2">
+                  {block.data.results.map((r, j) => (
+                    <a key={j} href={r.url} target="_blank" rel="noopener noreferrer"
+                      className="block text-xs hover:text-[var(--bauhaus-red)] transition-colors group">
+                      <div className="font-bold truncate group-hover:underline">{r.title}</div>
+                      <div className="text-[var(--ink-dim)] truncate">{r.snippet}</div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+            {block.type === 'images' && block.data && block.data.length > 0 && (
+              <div className="grid grid-cols-2 gap-2">
+                {block.data.map((img, j) => (
+                  <div key={j} className="border-[2px] border-[var(--bauhaus-black)] overflow-hidden">
+                    <img src={img.url} alt={img.title || ''} className="w-full h-32 object-cover" />
+                    {img.title && <div className="text-[10px] p-1 truncate text-[var(--ink-dim)]">{img.title}</div>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </>
+    )
   }
 
   if (loading) {
@@ -276,6 +326,15 @@ export default function Session() {
             </svg>
             <span className="text-xs font-mono tracking-wider">{formatTime(clock)}</span>
           </div>
+          <motion.button
+            whileHover={{ rotate: 90 }}
+            onClick={() => setShowPicker(!showPicker)}
+            className="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white transition-colors cursor-pointer"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
+              <circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+            </svg>
+          </motion.button>
           <button
             onClick={() => setShowSidebar(!showSidebar)}
             className="px-3 py-1 text-xs uppercase tracking-wider hover:text-[var(--bauhaus-yellow)] transition-colors cursor-pointer"
@@ -302,6 +361,13 @@ export default function Session() {
             </svg>
           </motion.button>
         </div>
+      </div>
+
+      {/* Color Picker */}
+      <div className="fixed top-4 right-4 z-[var(--z-modal)]">
+        <AnimatePresence>
+          {showPicker && <ColorPicker onClose={() => setShowPicker(false)} />}
+        </AnimatePresence>
       </div>
 
       {/* Mobile nav overlay */}
@@ -415,7 +481,7 @@ export default function Session() {
                     }`}
                   >
                     <div className="px-5 py-3">
-                      {renderMessage(msg.content, msg.role)}
+                      {renderMessage(msg.content, msg.role, msg.blocks)}
                     </div>
                   </motion.div>
                   {/* Timestamp */}

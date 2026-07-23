@@ -14,6 +14,7 @@ async function req(path, options = {}) {
 
 export const api = {
   // User
+  listUsers: () => req('/sessions/users'),
   createUser: (data) => req('/users', { method: 'POST', body: JSON.stringify(data) }),
   getUser: (id) => req(`/users/${id}`),
   deleteAccount: (id) => req(`/users/${id}`, { method: 'DELETE' }),

@@ -69,6 +69,7 @@ async function setup() {
         { name: 'sessionId', type: 'text', required: true, max: 100 },
         { name: 'role', type: 'text', required: true, max: 50 },
         { name: 'content', type: 'text', required: true, max: 100000 },
+        { name: 'blocks', type: 'json' },
         { name: 'created', type: 'autodate', system: true, onCreate: true, onUpdate: false },
         { name: 'updated', type: 'autodate', system: true, onCreate: true, onUpdate: true }
       ]
@@ -104,6 +105,20 @@ async function setup() {
     }
   }
 
+  // Migration: add blocks field to messages if missing
+  const msgCol = existing.items.find(c => c.name === 'messages')
+  if (msgCol && !msgCol.fields.find(f => f.name === 'blocks')) {
+    console.log('Adding "blocks" field to messages collection...')
+    const fields = [...msgCol.fields, { name: 'blocks', type: 'json', system: false }]
+    await api(`/api/collections/messages`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ fields })
+    })
+    console.log('Added blocks field to messages')
+  }
+
+  // Migration: add listProfiles endpoint
   console.log('PocketBase schema setup complete!')
   console.log(`Admin UI: ${PB_URL}/_/`)
 }

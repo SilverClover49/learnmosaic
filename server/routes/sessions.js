@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url'
 import { promises as fs } from 'fs'
 import { callAI } from '../services/openrouter.js'
 import { generateImage } from '../services/imagegen.js'
+import { toolDefinitions, executeToolCalls } from '../services/tools.js'
 import { pb } from '../services/pb.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -23,6 +24,16 @@ const router = Router()
 router.get('/', async (req, res) => {
   try {
     const data = await pb.listSessions()
+    res.json(data)
+  } catch (e) {
+    res.status(500).json({ error: e.message })
+  }
+})
+
+// List all users (profiles)
+router.get('/users', async (req, res) => {
+  try {
+    const data = await pb.listProfiles()
     res.json(data)
   } catch (e) {
     res.status(500).json({ error: e.message })
@@ -108,7 +119,7 @@ router.post('/', async (req, res) => {
   res.json({ id: session.id, ...session })
 })
 
-// Chat with AI tutor
+// Chat with AI tutor (tool-based agent)
 router.post('/:id/chat', async (req, res) => {
   const { message, history, currentTime, sessionDuration } = req.body
   let meta
@@ -128,7 +139,8 @@ router.post('/:id/chat', async (req, res) => {
   }
 
   const tutorPrompt = await loadPrompt('tutor.md')
-  const system = tutorPrompt
+  const toolsPrompt = await loadPrompt('tools.md')
+  const system = tutorPrompt + '\n\n' + toolsPrompt
     .replace(/{name}/g, meta.name)
     .replace(/{age}/g, meta.age)
     .replace(/{interests}/g, (meta.interests || []).join(', '))
@@ -144,21 +156,82 @@ router.post('/:id/chat', async (req, res) => {
   const aiMessages = (history || []).concat([{ role: 'user', content: message }])
 
   try {
-    const reply = await callAI({ system, messages: aiMessages, sessionId: req.params.id })
-    const cleanReply = reply.replace(/\[MILESTONE:[^\]]*\]/g, '').trim()
+    // First AI call — with tools
+    const firstReply = await callAI({
+      system,
+      messages: aiMessages,
+      tools: toolDefinitions,
+      sessionId: req.params.id
+    })
+
+    let finalText = firstReply.content || ''
+    let blocks = []
+
+    // If AI wants to use tools
+    if (firstReply.tool_calls && firstReply.tool_calls.length > 0) {
+      const toolResults = await executeToolCalls(firstReply.tool_calls)
+
+      // Collect blocks from tool results
+      blocks = toolResults.filter(r => r.block).map(r => r.block)
+
+      // Build tool result messages
+      const toolMessages = [
+        ...aiMessages,
+        { role: 'assistant', content: null, tool_calls: firstReply.tool_calls },
+        ...toolResults.map(r => ({
+          role: 'tool',
+          content: r.content,
+          tool_call_id: r.tool_call_id
+        }))
+      ]
+
+      // Second AI call — with tool results
+      const secondReply = await callAI({
+        system,
+        messages: toolMessages,
+        sessionId: req.params.id
+      })
+
+      finalText = (secondReply.content || '').replace(/\[MILESTONE:[^\]]*\]/g, '').trim()
+
+      // Check for tool calls in second reply too (allow chaining)
+      if (secondReply.tool_calls && secondReply.tool_calls.length > 0) {
+        const moreResults = await executeToolCalls(secondReply.tool_calls)
+        blocks = blocks.concat(moreResults.filter(r => r.block).map(r => r.block))
+
+        const moreMessages = [
+          ...toolMessages,
+          { role: 'assistant', content: null, tool_calls: secondReply.tool_calls },
+          ...moreResults.map(r => ({
+            role: 'tool',
+            content: r.content,
+            tool_call_id: r.tool_call_id
+          }))
+        ]
+
+        const thirdReply = await callAI({
+          system,
+          messages: moreMessages,
+          sessionId: req.params.id
+        })
+        finalText = (thirdReply.content || '').replace(/\[MILESTONE:[^\]]*\]/g, '').trim()
+      }
+    } else {
+      finalText = finalText.replace(/\[MILESTONE:[^\]]*\]/g, '').trim()
+    }
 
     // Persist both messages
     await pb.createMessage({ sessionId: req.params.id, role: 'user', content: message })
-    await pb.createMessage({ sessionId: req.params.id, role: 'assistant', content: cleanReply })
+    await pb.createMessage({ sessionId: req.params.id, role: 'assistant', content: finalText, blocks })
 
     // Check for milestones
-    const milestoneMatch = reply.match(/\[MILESTONE:\s*(.*?)\]/)
+    const milestoneMatch = finalText.match(/\[MILESTONE:\s*(.*?)\]/) || (firstReply.content || '').match(/\[MILESTONE:\s*(.*?)\]/)
     if (milestoneMatch) {
       await pb.addMilestone({ sessionId: req.params.id, type: 'achievement', description: milestoneMatch[1].trim() })
     }
 
     // Append to thinking board
-    const boardEntry = `\n## ${now.toLocaleString()}\n\n**Student**: ${message.slice(0, 200)}\n\n**Tutor**: ${cleanReply.slice(0, 300)}...\n\n---\n`
+    const boardEntry = `\n## ${now.toLocaleString()}\n\n**Student**: ${message.slice(0, 200)}\n\n**Tutor**: ${finalText.slice(0, 300)}...\n\n---\n`
     const updatedBoard = (meta.thinkingBoard || '') + boardEntry
     const newCount = (meta.chatCount || 0) + 1
 
@@ -183,7 +256,7 @@ router.post('/:id/chat', async (req, res) => {
       await pb.updateSession(req.params.id, { thinkingBoard: updatedBoard, chatCount: newCount })
     }
 
-    res.json({ reply: cleanReply })
+    res.json({ reply: finalText, blocks })
   } catch (e) {
     res.status(500).json({ error: e.message })
   }

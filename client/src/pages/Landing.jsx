@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import PageTransition from '../components/layout/PageTransition'
 import Button from '../components/ui/Button'
 import ColorPicker from '../components/visuals/ColorPicker'
+import { api } from '../lib/api'
 
 const taglines = [
   'ready to learn?',
@@ -30,17 +31,22 @@ export default function Landing() {
   const navigate = useNavigate()
   const [tagline, setTagline] = useState(0)
   const [showPicker, setShowPicker] = useState(false)
-  const [hasSessions, setHasSessions] = useState(false)
+  const [users, setUsers] = useState([])
+  const [showUsers, setShowUsers] = useState(false)
 
   useEffect(() => {
-    const sessions = JSON.parse(localStorage.getItem('learnmosaic-sessions') || '[]')
-    setHasSessions(sessions.length > 0)
+    api.listUsers().then(setUsers).catch(() => {})
   }, [])
 
   useEffect(() => {
     const interval = setInterval(() => setTagline(prev => (prev + 1) % taglines.length), 3500)
     return () => clearInterval(interval)
   }, [])
+
+  const handleContinue = (user) => {
+    localStorage.setItem('learnmosaic-user', JSON.stringify(user))
+    navigate('/dashboard')
+  }
 
   return (
     <PageTransition className="min-h-[100dvh] flex flex-col relative">
@@ -118,9 +124,9 @@ export default function Landing() {
             <Button size="lg" onClick={() => navigate('/onboarding')}>
               START
             </Button>
-            {hasSessions && (
-              <Button variant="secondary" size="md" onClick={() => navigate('/dashboard')}>
-                VIEW SESSIONS
+            {users.length > 0 && (
+              <Button variant="secondary" size="md" onClick={() => setShowUsers(!showUsers)}>
+                {showUsers ? 'HIDE PROFILES' : 'CONTINUE'}
               </Button>
             )}
           </motion.div>
@@ -128,54 +134,77 @@ export default function Landing() {
 
         {/* Right column - Geometric composition (60%) */}
         <div className="lg:w-[60%] relative bg-[var(--surface)] flex items-center justify-center p-8 lg:p-16 overflow-hidden">
-          {/* Geometric shapes */}
-          <div className="relative w-full max-w-lg aspect-square">
-            {/* Large circle */}
+          {showUsers && users.length > 0 ? (
             <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="absolute top-0 left-0 w-[70%] aspect-square bg-[var(--bauhaus-yellow)] rounded-full"
-            />
-            
-            {/* Square */}
-            <motion.div
-              initial={{ scale: 0, rotate: 45 }}
-              animate={{ scale: 1, rotate: 45 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="absolute bottom-[10%] right-[10%] w-[50%] aspect-square bg-[var(--bauhaus-blue)]"
-            />
-            
-            {/* Small circle */}
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-              className="absolute top-[30%] right-[20%] w-[25%] aspect-square bg-[var(--bauhaus-red)] rounded-full"
-            />
-            
-            {/* Triangle */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.6, delay: 0.8 }}
-              className="absolute bottom-[30%] left-[15%]"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="w-full max-w-md"
             >
-              <svg width="120" height="104" viewBox="0 0 120 104" fill="none">
-                <path d="M60 0L120 104H0L60 0Z" fill="var(--bauhaus-black)" />
-              </svg>
+              <h3 className="text-xs uppercase tracking-wider text-[var(--ink-muted)] mb-6 font-bold">Your Profiles</h3>
+              <div className="space-y-3">
+                {users.map((u, i) => (
+                  <motion.button
+                    key={u.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.08 }}
+                    whileHover={{ scale: 1.02, x: 4 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => handleContinue(u)}
+                    className="w-full flex items-center gap-4 p-5 border-[2px] border-[var(--bauhaus-black)] bg-[var(--surface)] hover:bg-[var(--bauhaus-yellow)] text-left cursor-pointer transition-all duration-200"
+                  >
+                    <div className="w-14 h-14 bg-[var(--bauhaus-red)] flex items-center justify-center flex-shrink-0">
+                      <span className="text-xl font-black text-[var(--bauhaus-white)]">{u.name?.charAt(0)?.toUpperCase()}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-bold uppercase tracking-wider">{u.name}</div>
+                      <div className="text-xs text-[var(--ink-muted)]">Age {u.age}</div>
+                    </div>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="flex-shrink-0">
+                      <path d="M6 3l5 5-5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="square"/>
+                    </svg>
+                  </motion.button>
+                ))}
+              </div>
             </motion.div>
-
-            {/* Grid lines */}
-            <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute top-1/3 left-0 right-0 h-[1px] bg-[var(--bauhaus-black)] opacity-20" />
-              <div className="absolute top-2/3 left-0 right-0 h-[1px] bg-[var(--bauhaus-black)] opacity-20" />
-              <div className="absolute left-1/3 top-0 bottom-0 w-[1px] bg-[var(--bauhaus-black)] opacity-20" />
-              <div className="absolute left-2/3 top-0 bottom-0 w-[1px] bg-[var(--bauhaus-black)] opacity-20" />
+          ) : (
+            <div className="relative w-full max-w-lg aspect-square">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="absolute top-0 left-0 w-[70%] aspect-square bg-[var(--bauhaus-yellow)] rounded-full"
+              />
+              <motion.div
+                initial={{ scale: 0, rotate: 45 }}
+                animate={{ scale: 1, rotate: 45 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                className="absolute bottom-[10%] right-[10%] w-[50%] aspect-square bg-[var(--bauhaus-blue)]"
+              />
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.6, delay: 0.6 }}
+                className="absolute top-[30%] right-[20%] w-[25%] aspect-square bg-[var(--bauhaus-red)] rounded-full"
+              />
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.8 }}
+                className="absolute bottom-[30%] left-[15%]"
+              >
+                <svg width="120" height="104" viewBox="0 0 120 104" fill="none">
+                  <path d="M60 0L120 104H0L60 0Z" fill="var(--bauhaus-black)" />
+                </svg>
+              </motion.div>
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute top-1/3 left-0 right-0 h-[1px] bg-[var(--bauhaus-black)] opacity-20" />
+                <div className="absolute top-2/3 left-0 right-0 h-[1px] bg-[var(--bauhaus-black)] opacity-20" />
+                <div className="absolute left-1/3 top-0 bottom-0 w-[1px] bg-[var(--bauhaus-black)] opacity-20" />
+                <div className="absolute left-2/3 top-0 bottom-0 w-[1px] bg-[var(--bauhaus-black)] opacity-20" />
+              </div>
             </div>
-          </div>
-
-          {/* Vertical label */}
+          )}
           <div className="absolute left-8 top-1/2 -translate-y-1/2 vertical-type text-[var(--ink-dim)]">
             FORM FOLLOWS FUNCTION
           </div>

@@ -89,15 +89,17 @@ export default function ProfilePanel({ user, sessions, open, onClose }) {
                 ))}
               </div>
 
-              {/* Quick links */}
-              <div className="space-y-1 mb-8">
-                <p className="text-[10px] uppercase tracking-wider text-[var(--ink-muted)] mb-3">QUICK LINKS</p>
-                <a href="/dashboard" className="block px-4 py-3 text-sm uppercase tracking-wider bg-[var(--bauhaus-black)] text-white text-center">
-                  DASHBOARD
-                </a>
-                <a href="/onboarding" className="block px-4 py-3 text-sm uppercase tracking-wider border-[2px] border-[var(--bauhaus-black)] text-center hover:bg-gray-100 transition-colors">
-                  NEW SESSION
-                </a>
+              {/* Exit */}
+              <div className="mb-8">
+                <button
+                  onClick={() => { localStorage.removeItem('learnmosaic-user'); navigate('/') }}
+                  className="w-full flex items-center justify-center gap-3 px-4 py-3 text-sm uppercase tracking-wider border-[2px] border-[var(--bauhaus-black)] text-[var(--bauhaus-red)] hover:bg-[var(--bauhaus-red)] hover:text-white transition-all cursor-pointer"
+                >
+                  <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M6 14H3a1 1 0 01-1-1V3a1 1 0 011-1h3M11 11l3-3-3-3M14 8H6" strokeLinecap="square"/>
+                  </svg>
+                  EXIT
+                </button>
               </div>
 
               {/* Danger zone */}

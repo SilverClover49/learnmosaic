@@ -1,7 +1,22 @@
 const API_URL = 'https://openrouter.ai/api/v1/chat/completions'
 const MODEL = 'openai/gpt-4o-mini'
 
-export async function callAI({ system, messages, sessionId }) {
+export async function callAI({ system, messages, tools, sessionId }) {
+  const body = {
+    model: MODEL,
+    messages: [
+      ...(system ? [{ role: 'system', content: system }] : []),
+      ...messages
+    ],
+    temperature: 0.7,
+    max_tokens: 4096
+  }
+
+  if (tools && tools.length > 0) {
+    body.tools = tools
+    body.tool_choice = 'auto'
+  }
+
   const res = await fetch(API_URL, {
     method: 'POST',
     headers: {
@@ -10,15 +25,7 @@ export async function callAI({ system, messages, sessionId }) {
       'HTTP-Referer': 'http://localhost:3001',
       'X-Title': 'LearnMosaic'
     },
-    body: JSON.stringify({
-      model: MODEL,
-      messages: [
-        ...(system ? [{ role: 'system', content: system }] : []),
-        ...messages
-      ],
-      temperature: 0.7,
-      max_tokens: 4096
-    })
+    body: JSON.stringify(body)
   })
 
   if (!res.ok) {
@@ -27,5 +34,5 @@ export async function callAI({ system, messages, sessionId }) {
   }
 
   const data = await res.json()
-  return data.choices[0].message.content
+  return data.choices[0].message
 }

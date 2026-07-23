@@ -30,10 +30,12 @@ export default function SessionMenu({ session, onDelete, onRename, onToggleFavor
   }
 
   return (
-    <div ref={ref} className="absolute top-3 right-3 z-30">
+    <div ref={ref} className="absolute bottom-4 right-4 z-30">
       <motion.button
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
+        animate={open ? { rotate: 180 } : { rotate: 0 }}
+        transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
         className="w-8 h-8 bg-white/20 hover:bg-white/30 flex items-center justify-center cursor-pointer"
         onClick={(e) => { e.stopPropagation(); setOpen(!open) }}
       >
@@ -47,11 +49,11 @@ export default function SessionMenu({ session, onDelete, onRename, onToggleFavor
       <AnimatePresence>
         {open && !renaming && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: -4 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: -4 }}
-            transition={{ duration: 0.15 }}
-            className="absolute top-10 right-0 w-44 bg-[var(--bauhaus-black)] border-[2px] border-[var(--bauhaus-black)] shadow-xl z-40 overflow-hidden"
+            initial={{ opacity: 0, rotate: -15, scale: 0.85, y: -8 }}
+            animate={{ opacity: 1, rotate: 0, scale: 1, y: 0 }}
+            exit={{ opacity: 0, rotate: -15, scale: 0.85, y: -8 }}
+            transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
+            className="absolute bottom-full right-0 mb-2 w-44 bg-[var(--bauhaus-black)] border-[2px] border-[var(--bauhaus-black)] shadow-xl z-40 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -90,11 +92,11 @@ export default function SessionMenu({ session, onDelete, onRename, onToggleFavor
       <AnimatePresence>
         {renaming && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: -4 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: -4 }}
-            transition={{ duration: 0.15 }}
-            className="absolute top-10 right-0 w-56 bg-white border-[2px] border-[var(--bauhaus-black)] shadow-xl z-40 overflow-hidden"
+            initial={{ opacity: 0, rotate: -10, scale: 0.9, y: -8 }}
+            animate={{ opacity: 1, rotate: 0, scale: 1, y: 0 }}
+            exit={{ opacity: 0, rotate: -10, scale: 0.9, y: -8 }}
+            transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
+            className="absolute bottom-full right-0 mb-2 w-56 bg-white border-[2px] border-[var(--bauhaus-black)] shadow-xl z-40 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-3">

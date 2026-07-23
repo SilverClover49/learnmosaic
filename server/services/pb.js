@@ -43,6 +43,11 @@ export const pb = {
   // Profiles
   createProfile: (data) => api('POST', '/api/collections/profiles/records', data),
 
+  listProfiles: async () => {
+    const res = await api('GET', '/api/collections/profiles/records?sort=-created')
+    return res?.items || []
+  },
+
   getProfile: (id) => api('GET', `/api/collections/profiles/records/${id}`),
 
   findProfileByName: async (name) => {

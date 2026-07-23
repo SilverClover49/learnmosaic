@@ -10,6 +10,7 @@ import AmbientBackground from '../components/visuals/AmbientBackground'
 import RevealText, { StaggerReveal, StaggerItem } from '../components/ui/Reveal'
 import SessionMenu from '../components/session/SessionMenu'
 import ProfilePanel from '../components/dashboard/ProfilePanel'
+import ColorPicker from '../components/visuals/ColorPicker'
 import { api } from '../lib/api'
 
 const cardColors = ['red', 'blue', 'yellow', 'black']
@@ -22,6 +23,7 @@ export default function Dashboard() {
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
   const [showProfile, setShowProfile] = useState(false)
+  const [showPicker, setShowPicker] = useState(false)
 
   useEffect(() => {
     const u = JSON.parse(localStorage.getItem('learnmosaic-user') || 'null')
@@ -81,6 +83,22 @@ export default function Dashboard() {
       </div>
 
       <ProfilePanel user={user} sessions={sessions} open={showProfile} onClose={() => setShowProfile(false)} />
+
+      {/* Theme button */}
+      <motion.button
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        onClick={() => setShowPicker(!showPicker)}
+        className="fixed top-24 right-6 z-[var(--z-dropdown)] w-10 h-10 bg-[var(--bauhaus-black)] text-[var(--bauhaus-white)] flex items-center justify-center cursor-pointer hover:bg-[var(--bauhaus-red)] transition-all duration-200"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
+          <circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+      </motion.button>
+
+      <AnimatePresence>
+        {showPicker && <ColorPicker onClose={() => setShowPicker(false)} />}
+      </AnimatePresence>
 
       <Modal
         open={!!deleteTarget}
