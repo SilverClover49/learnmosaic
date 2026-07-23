@@ -1,0 +1,126 @@
+import { useState, useRef, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+
+export default function SessionMenu({ session, onDelete, onRename, onToggleFavorite }) {
+  const [open, setOpen] = useState(false)
+  const [renaming, setRenaming] = useState(false)
+  const [newName, setNewName] = useState(session.goal || '')
+  const ref = useRef(null)
+  const inputRef = useRef(null)
+
+  useEffect(() => {
+    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  useEffect(() => {
+    if (renaming && inputRef.current) {
+      inputRef.current.focus()
+      inputRef.current.select()
+    }
+  }, [renaming])
+
+  const handleRename = () => {
+    if (newName.trim() && newName !== session.goal) {
+      onRename(session.id, newName.trim())
+    }
+    setRenaming(false)
+    setOpen(false)
+  }
+
+  return (
+    <div ref={ref} className="absolute top-3 right-3 z-30">
+      <motion.button
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        className="w-8 h-8 bg-white/20 hover:bg-white/30 flex items-center justify-center cursor-pointer"
+        onClick={(e) => { e.stopPropagation(); setOpen(!open) }}
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+          <circle cx="7" cy="2.5" r="1.5" />
+          <circle cx="7" cy="7" r="1.5" />
+          <circle cx="7" cy="11.5" r="1.5" />
+        </svg>
+      </motion.button>
+
+      <AnimatePresence>
+        {open && !renaming && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: -4 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: -4 }}
+            transition={{ duration: 0.15 }}
+            className="absolute top-10 right-0 w-44 bg-[var(--bauhaus-black)] border-[2px] border-[var(--bauhaus-black)] shadow-xl z-40 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="w-full flex items-center gap-3 px-4 py-3 text-xs uppercase tracking-wider text-[var(--bauhaus-white)] hover:bg-white/10 transition-colors cursor-pointer"
+              onClick={() => { onToggleFavorite(session.id, !session.favorite); setOpen(false) }}
+            >
+              <svg width="12" height="12" viewBox="0 0 16 16" fill={session.favorite ? 'var(--bauhaus-yellow)' : 'none'} stroke="currentColor" strokeWidth="1.5">
+                <path d="M8 1l2 5h5l-4 3.5 1.5 5L8 11.5 3.5 14.5 5 9.5 1 6h5l2-5Z" strokeLinecap="square" strokeLinejoin="miter"/>
+              </svg>
+              {session.favorite ? 'REMOVE FAVORITE' : 'FAVORITE'}
+            </button>
+            <button
+              className="w-full flex items-center gap-3 px-4 py-3 text-xs uppercase tracking-wider text-[var(--bauhaus-white)] hover:bg-white/10 transition-colors cursor-pointer"
+              onClick={() => setRenaming(true)}
+            >
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M2 12v2h2l9-9-2-2-9 9Z" strokeLinecap="square"/>
+                <path d="M11 3l2 2" strokeLinecap="square"/>
+              </svg>
+              RENAME
+            </button>
+            <div className="border-t-[1px] border-white/20" />
+            <button
+              className="w-full flex items-center gap-3 px-4 py-3 text-xs uppercase tracking-wider text-[var(--bauhaus-red)] hover:bg-red-500/10 transition-colors cursor-pointer"
+              onClick={() => { setOpen(false); onDelete(session) }}
+            >
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M2 4h12M5 4V2a1 1 0 011-1h4a1 1 0 011 1v2M13 4v10a1 1 0 01-1 1H4a1 1 0 01-1-1V4" strokeLinecap="square"/>
+              </svg>
+              DELETE
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {renaming && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: -4 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: -4 }}
+            transition={{ duration: 0.15 }}
+            className="absolute top-10 right-0 w-56 bg-white border-[2px] border-[var(--bauhaus-black)] shadow-xl z-40 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-3">
+              <p className="text-[10px] uppercase tracking-wider text-[var(--ink-muted)] mb-2">RENAME SESSION</p>
+              <input
+                ref={inputRef}
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') handleRename(); if (e.key === 'Escape') setRenaming(false) }}
+                className="w-full px-3 py-2 text-sm border-[2px] border-[var(--bauhaus-black)] outline-none mb-2"
+                placeholder="Session name"
+              />
+              <div className="flex gap-2">
+                <button
+                  className="flex-1 py-2 text-[10px] uppercase tracking-wider bg-[var(--bauhaus-black)] text-white cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={handleRename}
+                >SAVE</button>
+                <button
+                  className="flex-1 py-2 text-[10px] uppercase tracking-wider border-[2px] border-[var(--bauhaus-black)] cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => { setRenaming(false); setNewName(session.goal); setOpen(false) }}
+                >CANCEL</button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
