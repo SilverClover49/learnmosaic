@@ -1,6 +1,15 @@
 import { useEffect, useRef } from 'react'
 import { useTheme } from '../../lib/ThemeProvider'
 
+const COLORS = [
+  'rgba(230,57,70,0.25)',
+  'rgba(29,53,87,0.22)',
+  'rgba(244,211,94,0.20)',
+  'rgba(0,0,0,0.10)'
+]
+
+const TYPES = ['circle', 'square', 'triangle']
+
 export default function AmbientBackground({ variant = 'default' }) {
   const { theme } = useTheme()
   const canvasRef = useRef(null)
@@ -21,51 +30,49 @@ export default function AmbientBackground({ variant = 'default' }) {
     resize()
     window.addEventListener('resize', resize)
 
-    const speedMultiplier = theme.motionSpeed === 'reduced' ? 0.5 : theme.motionSpeed === 'enhanced' ? 1.5 : 1
+    const speedMul = theme.motionSpeed === 'reduced' ? 0.3 : theme.motionSpeed === 'enhanced' ? 2 : 1
 
-    const shapes = Array.from({ length: 12 }, () => ({
+    const shapes = Array.from({ length: 18 }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      size: 20 + Math.random() * 60,
-      speedX: (Math.random() - 0.5) * 0.15 * speedMultiplier,
-      speedY: (Math.random() - 0.5) * 0.15 * speedMultiplier,
+      size: 40 + Math.random() * 100,
+      speedX: (Math.random() - 0.5) * 0.2 * speedMul,
+      speedY: (Math.random() - 0.5) * 0.2 * speedMul,
       rotation: Math.random() * Math.PI * 2,
-      rotSpeed: (Math.random() - 0.5) * 0.003 * speedMultiplier,
-      type: ['circle', 'square', 'triangle'][Math.floor(Math.random() * 3)],
-      color: ['rgba(230,57,70,0.06)', 'rgba(29,53,87,0.06)', 'rgba(244,211,94,0.06)', 'rgba(0,0,0,0.03)'][Math.floor(Math.random() * 4)],
-      opacity: 0.3 + Math.random() * 0.5
+      rotSpeed: (Math.random() - 0.5) * 0.004 * speedMul,
+      type: TYPES[Math.floor(Math.random() * 3)],
+      color: COLORS[Math.floor(Math.random() * COLORS.length)]
     }))
 
     const draw = () => {
-      time += 0.005
+      time += 0.004
       ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-      shapes.forEach(s => {
+      for (const s of shapes) {
         s.x += s.speedX
         s.y += s.speedY
         s.rotation += s.rotSpeed
 
-        if (s.x < -s.size) s.x = canvas.width + s.size
-        if (s.x > canvas.width + s.size) s.x = -s.size
-        if (s.y < -s.size) s.y = canvas.height + s.size
-        if (s.y > canvas.height + s.size) s.y = -s.size
+        const wrap = s.size * 2
+        if (s.x < -wrap) s.x = canvas.width + wrap
+        if (s.x > canvas.width + wrap) s.x = -wrap
+        if (s.y < -wrap) s.y = canvas.height + wrap
+        if (s.y > canvas.height + wrap) s.y = -wrap
 
         ctx.save()
         ctx.translate(s.x, s.y)
         ctx.rotate(s.rotation)
-        ctx.globalAlpha = s.opacity * (0.7 + 0.3 * Math.sin(time + s.x * 0.01))
         ctx.fillStyle = s.color
-
-        const radius = theme.cornerRadius || 0
 
         if (s.type === 'circle') {
           ctx.beginPath()
           ctx.arc(0, 0, s.size / 2, 0, Math.PI * 2)
           ctx.fill()
         } else if (s.type === 'square') {
-          if (radius > 0) {
+          const r = theme.cornerRadius || 0
+          if (r > 0) {
             ctx.beginPath()
-            ctx.roundRect(-s.size / 2, -s.size / 2, s.size, s.size, radius)
+            ctx.roundRect(-s.size / 2, -s.size / 2, s.size, s.size, r)
             ctx.fill()
           } else {
             ctx.fillRect(-s.size / 2, -s.size / 2, s.size, s.size)
@@ -80,7 +87,7 @@ export default function AmbientBackground({ variant = 'default' }) {
         }
 
         ctx.restore()
-      })
+      }
 
       animId = requestAnimationFrame(draw)
     }
@@ -99,7 +106,6 @@ export default function AmbientBackground({ variant = 'default' }) {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 pointer-events-none z-0"
-      style={{ opacity: 0.8 }}
     />
   )
 }

@@ -61,6 +61,7 @@ router.post('/', async (req, res) => {
   }
 
   const now = new Date().toISOString()
+  const fullGoal = goal + (subGoal ? ` — ${subGoal}` : '')
 
   // Generate curriculum via AI
   const curriculumPrompt = await loadPrompt('curriculum.md')
@@ -68,7 +69,7 @@ router.post('/', async (req, res) => {
     .replace('{name}', displayName)
     .replace('{age}', ageNum != null ? String(ageNum) : 'unknown')
     .replace('{interests}', (interests || []).join(', '))
-    .replace('{goal}', goal + (subGoal ? ` — ${subGoal}` : ''))
+    .replace('{goal}', fullGoal)
     .replace('{timeframe}', timeframe || 'flexible')
 
   const settings = await getSettings()
@@ -81,7 +82,7 @@ router.post('/', async (req, res) => {
     })
     curriculum = result.content || ''
   } catch (e) {
-    curriculum = `# Curriculum: ${goal}\n\n*Curriculum generation unavailable.*`
+    curriculum = `# Curriculum: ${fullGoal}\n\n*Curriculum generation unavailable.*`
   }
 
   // Generate checklist via AI
@@ -102,7 +103,6 @@ router.post('/', async (req, res) => {
     checklist = `# Checklist: ${fullGoal}\n\n- [ ] ${fullGoal}`
   }
 
-  const fullGoal = goal + (subGoal ? ` — ${subGoal}` : '')
   const thinkingBoard = `# Thinking Board\n\n**Goal**: ${fullGoal}\n**Started**: ${now}\n\n## Initial Thoughts\n\nThe AI tutor uses this space to log thoughts and observations.\n\n---\n`
 
   // Save to PocketBase
@@ -251,6 +251,25 @@ router.post('/:id/undo-complete', async (req, res) => {
     await pb.updateSession(req.params.id, { status: 'active', completedAt: null })
     await pb.addMilestone({ sessionId: req.params.id, type: 'session_undo', description: 'Undid session completion' })
     res.json({ success: true })
+  } catch (e) {
+    res.status(500).json({ error: e.message })
+  }
+})
+
+// Suggest goal refinement prompts
+router.post('/suggest-refine', async (req, res) => {
+  const { goal } = req.body
+  if (!goal) return res.status(400).json({ error: 'Goal is required' })
+  const settings = await getSettings()
+  try {
+    const result = await callAI({
+      system: 'You are a learning advisor. Given a learning goal, suggest 3-4 specific, actionable ways the student could refine or narrow down their focus. Keep each suggestion to 1 sentence, concise and specific. Number them 1-4.',
+      messages: [{ role: 'user', content: `The student wants to: ${goal}\n\nSuggest 3-4 ways they could refine this goal.` }],
+      settings
+    })
+    const lines = (result.content || '').split('\n').filter(l => l.trim())
+    const suggestions = lines.map(l => l.replace(/^\d+[\.\)]\s*/, '').trim()).filter(Boolean)
+    res.json({ suggestions })
   } catch (e) {
     res.status(500).json({ error: e.message })
   }

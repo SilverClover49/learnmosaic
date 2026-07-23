@@ -1,18 +1,8 @@
-import { useRef, useEffect, useState } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 
 export default function CodeSandbox({ html, title }) {
-  const iframeRef = useRef(null)
   const [height, setHeight] = useState(300)
-
-  useEffect(() => {
-    if (!iframeRef.current) return
-    const doc = iframeRef.current.contentDocument
-    if (!doc) return
-    doc.open()
-    doc.write(html)
-    doc.close()
-  }, [html])
 
   return (
     <motion.div
@@ -39,11 +29,11 @@ export default function CodeSandbox({ html, title }) {
         </div>
       </div>
       <iframe
-        ref={iframeRef}
         title={title || 'sandbox'}
         className="w-full border-0"
         style={{ height, background: '#fff' }}
         sandbox="allow-scripts allow-modals"
+        srcDoc={html}
       />
     </motion.div>
   )

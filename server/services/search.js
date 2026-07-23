@@ -22,51 +22,27 @@ export async function searchWeb(query) {
 
 export async function searchImages(query) {
   try {
-    const res = await fetch(
-      `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}&iax=images&ia=images`,
+    // Search Wikipedia for articles matching the query
+    const searchRes = await fetch(
+      `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&srlimit=8&origin=*`,
       { headers: { 'User-Agent': 'LearnMosaic/1.0' } }
     )
-    if (!res.ok) return []
-    const html = await res.text()
-    const urls = [...html.matchAll(/<img[^>]+src="([^"]+)"[^>]*>/g)]
-      .map(m => m[1])
-      .filter(u => u.startsWith('http') && !u.includes('duckduckgo'))
-      .slice(0, 5)
-    return urls.map(url => ({ url, title: '' }))
-  } catch {
-    return await searchDuckDuckGoImagesV2(query)
-  }
-}
+    const searchData = await searchRes.json()
+    const titles = (searchData.query?.search || []).map(s => s.title).filter(Boolean)
+    if (titles.length === 0) return []
 
-async function searchDuckDuckGoImagesV2(query) {
-  try {
-    const res = await fetch(
-      `https://lite.duckduckgo.com/lite/?q=${encodeURIComponent(query)}`,
+    // Batch-fetch page images for all found articles
+    const pageRes = await fetch(
+      `https://en.wikipedia.org/w/api.php?action=query&titles=${titles.map(t => encodeURIComponent(t)).join('%7C')}&prop=pageimages&format=json&pithumbsize=400&origin=*`,
       { headers: { 'User-Agent': 'LearnMosaic/1.0' } }
     )
-    const html = await res.text()
-    const urls = [...html.matchAll(/<img[^>]+src="([^"]+)"[^>]*>/g)]
-      .map(m => m[1])
-      .filter(u => u.startsWith('http'))
-      .slice(0, 5)
-    return urls.map(url => ({ url, title: '' }))
-  } catch {
-    return []
-  }
-}
+    const pageData = await pageRes.json()
+    const pages = Object.values(pageData.query?.pages || {})
 
-async function searchDuckDuckGoImages(query) {
-  try {
-    const res = await fetch(
-      `https://lite.duckduckgo.com/lite/?q=${encodeURIComponent(query)}`,
-      { headers: { 'User-Agent': 'LearnMosaic/1.0' } }
-    )
-    const html = await res.text()
-    const urls = [...html.matchAll(/<img[^>]+src="([^"]+)"[^>]*>/g)]
-      .map(m => m[1])
-      .filter(u => u.startsWith('http'))
-      .slice(0, 5)
-    return urls.map(u => ({ url: u }))
+    return pages
+      .filter(p => p.thumbnail?.source)
+      .slice(0, 6)
+      .map(p => ({ url: p.thumbnail.source, title: p.title }))
   } catch {
     return []
   }

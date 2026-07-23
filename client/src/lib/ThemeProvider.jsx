@@ -11,7 +11,8 @@ export function ThemeProvider({ children }) {
       borderWeight: 4,
       cornerRadius: 0,
       motionSpeed: 'standard',
-      ambientShapes: true
+      ambientShapes: true,
+      darkMode: false
     }
   })
 
@@ -44,13 +45,18 @@ export function ThemeProvider({ children }) {
     // Corner radius
     root.style.setProperty('--corner-radius', `${theme.cornerRadius || 0}px`)
 
+    // Dark mode
+    root.classList.toggle('dark-mode', !!theme.darkMode)
+
     // Motion speed
     const speedMap = {
-      reduced: '0.5',
+      reduced: '0.3',
       standard: '1',
-      enhanced: '1.5'
+      enhanced: '1.8'
     }
-    root.style.setProperty('--motion-speed', speedMap[theme.motionSpeed] || '1')
+    const speed = speedMap[theme.motionSpeed] || '1'
+    root.style.setProperty('--motion-speed', speed)
+    root.style.setProperty('--transition-speed', `calc(700ms * ${speed})`)
 
   }, [theme])
 

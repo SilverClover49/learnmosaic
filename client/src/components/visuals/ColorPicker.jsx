@@ -57,6 +57,25 @@ export default function ColorPicker({ onClose }) {
           </motion.button>
         </div>
 
+        {/* Dark Mode Toggle */}
+        <div className="flex items-center justify-between mb-5 pb-5 border-b-[2px] border-[var(--bauhaus-black)]">
+          <div>
+            <span className="text-[10px] text-[var(--ink)] uppercase tracking-[0.15em] font-bold block">Dark Mode</span>
+            <span className="text-[9px] text-[var(--ink-muted)]">Switch color theme</span>
+          </div>
+          <motion.button
+            onClick={() => setTheme({ darkMode: !theme.darkMode })}
+            className={`w-11 h-5 transition-all duration-200 cursor-pointer relative border-[2px] border-[var(--bauhaus-black)]
+              ${theme.darkMode ? 'bg-[var(--bauhaus-black)]' : 'bg-[var(--surface)]'}`}
+          >
+            <motion.div
+              animate={{ x: theme.darkMode ? 22 : 2 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+              className="w-3 h-3 bg-[var(--bauhaus-yellow)] absolute top-[3px]"
+            />
+          </motion.button>
+        </div>
+
         {/* Texture */}
         <div className="mb-5">
           <label className="text-[10px] text-[var(--ink-muted)] block mb-2 uppercase tracking-[0.15em] font-bold">Texture</label>

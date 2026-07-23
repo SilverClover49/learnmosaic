@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import DOMPurify from 'dompurify'
 
-export default function ArtifactRenderer({ language, code, imageUrl }) {
+export default function ArtifactRenderer({ language, code, imageUrl, onReference }) {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = () => {
@@ -16,12 +16,14 @@ export default function ArtifactRenderer({ language, code, imageUrl }) {
   const isDiagram = language === 'diagram' || language === 'mermaid'
   const isVisual = language === 'html'
 
+  const referenceLabel = isSvg ? `SVG diagram${code.match(/viewBox="[^"]*"?\s*width="([^"]*)"/)?.[1] ? ` (${code.match(/viewBox="[^"]*"?\s*width="([^"]*)"/)[1]})` : ''}` : null
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.7, ease: [0.32, 0.72, 0, 1] }}
-      className="my-4 p-[2px] rounded-[var(--radius-xl)]"
+      className="my-4 p-[2px] rounded-[var(--radius-xl)] group/artifact"
       style={{ background: 'var(--glass-border)' }}
     >
       <div className="rounded-[calc(var(--radius-xl)-2px)] overflow-hidden"
@@ -36,12 +38,20 @@ export default function ArtifactRenderer({ language, code, imageUrl }) {
               {isImage ? 'image' : isSvg ? 'svg' : language || 'code'}
             </span>
           </div>
-          {!isImage && (
-            <button onClick={handleCopy}
-              className="text-xs text-[var(--ink-muted)] hover:text-[var(--ink)] px-2 py-1 rounded-md hover:bg-[var(--glass-hover)] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] cursor-pointer">
-              {copied ? 'Copied!' : 'Copy'}
-            </button>
-          )}
+          <div className="flex items-center gap-1">
+            {!isImage && onReference && (
+              <button onClick={() => onReference(`\`\`\`${language}\n${code.slice(0, 500)}${code.length > 500 ? '\n...' : ''}\n\`\`\``)}
+                className="text-xs text-[var(--ink-muted)] hover:text-[var(--ink)] px-2 py-1 rounded-md hover:bg-[var(--glass-hover)] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] cursor-pointer">
+                Reference
+              </button>
+            )}
+            {!isImage && (
+              <button onClick={handleCopy}
+                className="text-xs text-[var(--ink-muted)] hover:text-[var(--ink)] px-2 py-1 rounded-md hover:bg-[var(--glass-hover)] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] cursor-pointer">
+                {copied ? 'Copied!' : 'Copy'}
+              </button>
+            )}
+          </div>
         </div>
         <div className="overflow-x-auto">
           {isImage ? (

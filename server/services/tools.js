@@ -2,6 +2,56 @@ import { searchWeb, searchImages } from './search.js'
 import { generateImage } from './imagegen.js'
 import { storeMemory, recallMemories } from './memory.js'
 import { createArtifact, listArtifacts } from './artifacts.js'
+import { callAI } from './openrouter.js'
+import { getSettings } from './settings.js'
+
+// Minimal SVG validation — checks XML structure and common issues
+function validateSvg(code) {
+  const issues = []
+  if (!code || code.trim().length === 0) issues.push('empty')
+  if (!/<svg[\s>]/i.test(code)) issues.push('missing <svg> tag')
+  if (!/<\/svg>/i.test(code)) issues.push('missing </svg>')
+  const openCount = (code.match(/<[a-zA-Z][^>]*[^/]>/g) || []).length
+  const closeCount = (code.match(/<\/[a-zA-Z]+>/g) || []).length
+  const selfCloseCount = (code.match(/<[a-zA-Z][^>]*\/>/g) || []).length
+  if (openCount !== closeCount && openCount !== closeCount + selfCloseCount) {
+    issues.push(`${openCount} open tags but ${closeCount} closed`)
+  }
+  if (code.match(/<svg[^>]*>/i)?.[0] && !/viewBox\s*=\s*["']\d+\s+\d+\s+\d+\s+\d+["']/i.test(code)) {
+    issues.push('missing viewBox')
+  }
+  return issues
+}
+
+async function correctSvg(brokenCode, description, settings) {
+  const system = 'You are an SVG correction specialist. Fix the provided broken SVG code. Return ONLY valid SVG code, wrapped in ```svg ... ```. Preserve the original intent and visual design.'
+  const result = await callAI({
+    system,
+    messages: [
+      { role: 'user', content: `This SVG is broken. Here are the issues with it. Fix it and return only valid SVG code with viewBox, inline styles, fonts 14px+.\n\nDescription: ${description}\n\nBroken SVG:\n\`\`\`svg\n${brokenCode}\n\`\`\`` }
+    ],
+    settings
+  })
+  const content = result.content || ''
+  const match = content.match(/```svg\n([\s\S]*?)```/) || content.match(/```\n?([\s\S]*?)```/) || content.match(/<svg[\s\S]*?<\/svg>/i)
+  if (match) return match[1] || match[0]
+  return content
+}
+
+async function generateSvgWithCorrection(parsed, settings) {
+  let code = parsed.code
+  let description = parsed.description || 'SVG diagram'
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const issues = validateSvg(code)
+    if (issues.length === 0) break
+    code = await correctSvg(code, description + ` (attempt ${attempt + 1} had issues: ${issues.join(', ')})`, settings)
+  }
+  // Ensure responsive viewBox
+  if (!/style\s*=\s*["']/.test(code.match(/<svg[\s\S]*?>/)?.[0] || '')) {
+    code = code.replace(/<svg/i, '<svg style="max-width:100%;height:auto;max-height:60vh"')
+  }
+  return code
+}
 
 export const toolDefinitions = [
   {
@@ -155,6 +205,22 @@ export const toolDefinitions = [
   {
     type: 'function',
     function: {
+      name: 'generate_test',
+      description: 'Generate an interactive quiz, test, code problem, or assessment for the student. Types: quiz (multiple choice/true-false), code (coding problem with solution), test (full written test with multiple sections). The quiz opens in a side panel where the student can answer interactively.',
+      parameters: {
+        type: 'object',
+        properties: {
+          title: { type: 'string', description: 'Title of the test/quiz (e.g. "Python Variables Quiz", "Algebra Test")' },
+          type: { type: 'string', enum: ['quiz', 'code', 'test'], description: 'quiz = quick multiple choice/true-false, code = coding problem, test = full written test with multiple sections' },
+          questions: { type: 'string', description: 'JSON array of questions. For quiz: [{id:1, type:"multiple_choice"|"true_false", question:"...", options:["A","B","C","D"], answer:0, explanation:"..."}]. For code: [{id:1, type:"code", question:"...", starterCode:"...", solution:"...", explanation:"..."}]. For test: [{id:1, type:"short_answer"|"essay"|"multiple_choice", question:"...", options:["A","B"], answer:0, points:5, section:"Part I"}]' }
+        },
+        required: ['title', 'type', 'questions']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
       name: 'generate_download',
       description: 'Generate a downloadable file for the student. Use for: cheatsheets, practice worksheets, code files, study guides. The content is saved as an artifact AND offered as download.',
       parameters: {
@@ -197,11 +263,12 @@ export async function executeToolCall(toolCall, sessionId, settings = {}) {
       }
     }
     case 'generate_svg': {
+      const corrected = await generateSvgWithCorrection(parsed, settings)
       return {
         role: 'tool',
         content: `SVG: ${parsed.description}`,
         tool_call_id: toolCall.id,
-        block: { type: 'svg', code: parsed.code, description: parsed.description }
+        block: { type: 'svg', code: corrected, description: parsed.description }
       }
     }
     case 'generate_image': {
@@ -258,6 +325,18 @@ export async function executeToolCall(toolCall, sessionId, settings = {}) {
       return {
         role: 'tool', content: `Presentation: ${parsed.title} (${slides.length} slides)`, tool_call_id: toolCall.id,
         block: { type: 'presentation', title: parsed.title, slides }
+      }
+    }
+    case 'generate_test': {
+      let questions
+      try {
+        questions = typeof parsed.questions === 'string' ? JSON.parse(parsed.questions) : parsed.questions
+      } catch {
+        questions = [{ id: 1, type: 'multiple_choice', question: 'Parse error. Please review the test content.', options: ['OK'], answer: 0 }]
+      }
+      return {
+        role: 'tool', content: `Test: ${parsed.title} (${questions.length} questions)`, tool_call_id: toolCall.id,
+        block: { type: 'test', title: parsed.title, testType: parsed.type, questions }
       }
     }
     case 'generate_download': {

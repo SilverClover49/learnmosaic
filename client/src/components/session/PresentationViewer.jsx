@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import ReactMarkdown from 'react-markdown'
+import rehypeRaw from 'rehype-raw'
+import remarkGfm from 'remark-gfm'
 
 export default function PresentationViewer({ title, slides }) {
   const [current, setCurrent] = useState(0)
@@ -33,7 +35,7 @@ export default function PresentationViewer({ title, slides }) {
               '--tw-prose-code': '#cc3333',
               '--tw-prose-code-bg': '#f0f0f0',
             }}>
-              <ReactMarkdown>{slides[current]}</ReactMarkdown>
+              <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]}>{slides[current]}</ReactMarkdown>
             </div>
           </motion.div>
         </AnimatePresence>

@@ -90,6 +90,8 @@ export default function Onboarding() {
   })
   const [materials, setMaterials] = useState([])
   const [showMaterials, setShowMaterials] = useState(false)
+  const [suggestions, setSuggestions] = useState([])
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false)
   const [error, setError] = useState('')
   const fileInputRef = useRef(null)
 
@@ -594,6 +596,50 @@ export default function Onboarding() {
                         onChange={e => update('subGoal', e.target.value)}
                         autoFocus
                       />
+                      <div className="flex items-center gap-2 justify-center">
+                        <button
+                          onClick={async () => {
+                            setLoadingSuggestions(true); setSuggestions([])
+                            try {
+                              const res = await api.suggestRefine(profile.customGoal || profile.goal)
+                              setSuggestions(res.suggestions || [])
+                            } catch {}
+                            setLoadingSuggestions(false)
+                          }}
+                          disabled={loadingSuggestions}
+                          className="px-4 py-2 text-xs font-bold uppercase tracking-widest border-2 border-[var(--bauhaus-black)]
+                            bg-[var(--bauhaus-white)] hover:bg-[var(--bauhaus-yellow)] transition-colors duration-200
+                            disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          {loadingSuggestions ? 'Thinking...' : 'AI Suggest'}
+                        </button>
+                        {suggestions.length > 0 && (
+                          <button
+                            onClick={() => { setSuggestions([]) }}
+                            className="text-xs text-[var(--ink-muted)] underline hover:text-[var(--ink)] transition-colors"
+                          >
+                            Clear
+                          </button>
+                        )}
+                      </div>
+                      {suggestions.length > 0 && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="space-y-2 pt-1"
+                        >
+                          {suggestions.map((s, i) => (
+                            <button
+                              key={i}
+                              onClick={() => { update('subGoal', s); setSuggestions([]) }}
+                              className="w-full text-left p-3 border-2 border-[var(--bauhaus-black)] text-sm leading-snug
+                                bg-[var(--bauhaus-white)] hover:bg-[var(--bauhaus-yellow)] transition-colors duration-200"
+                            >
+                              {s}
+                            </button>
+                          ))}
+                        </motion.div>
+                      )}
                     </div>
                   </div>
                 )}

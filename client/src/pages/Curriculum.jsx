@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
+import rehypeRaw from 'rehype-raw'
+import remarkGfm from 'remark-gfm'
 import PageTransition from '../components/layout/PageTransition'
 import Button from '../components/ui/Button'
 import { api } from '../lib/api'
@@ -43,7 +45,7 @@ export default function Curriculum_() {
                 '--tw-prose-headings': 'var(--ink)',
                 '--tw-prose-bold': 'var(--ink)',
               }}>
-                <ReactMarkdown>{content}</ReactMarkdown>
+                <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
               </div>
             </div>
           </div>

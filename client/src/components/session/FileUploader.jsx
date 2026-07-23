@@ -24,14 +24,14 @@ export default function FileUploader({ sessionId }) {
       <button
         onClick={() => setShowMenu(!showMenu)}
         disabled={uploading}
-        className="w-10 h-10 rounded-full bg-[var(--glass)] border border-[var(--glass-border)] flex items-center justify-center cursor-pointer hover:bg-[var(--glass-hover)] transition-all duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] shrink-0 disabled:opacity-50"
+        className="w-10 h-10 border-[3px] border-[var(--bauhaus-black)] bg-[var(--bauhaus-white)] flex items-center justify-center cursor-pointer hover:bg-[var(--bauhaus-yellow)] transition-all duration-200 shrink-0 disabled:opacity-50"
         title="Attach materials"
       >
         {uploading ? (
-          <div className="w-4 h-4 rounded-full border-2 border-[var(--accent)] border-t-transparent animate-spin" />
+          <div className="w-4 h-4 border-2 border-[var(--bauhaus-black)] border-t-transparent animate-spin" />
         ) : (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--bauhaus-black)" strokeWidth="2" strokeLinecap="square">
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
           </svg>
         )}
       </button>

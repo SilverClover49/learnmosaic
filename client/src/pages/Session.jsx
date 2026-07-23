@@ -11,9 +11,12 @@ import SelectionToolbar from '../components/session/SelectionToolbar'
 import ReferencePanel from '../components/session/ReferencePanel'
 import CodeSandbox from '../components/session/CodeSandbox'
 import Timer from '../components/session/Timer'
+import QuizPanel from '../components/session/QuizPanel'
 import PresentationViewer from '../components/session/PresentationViewer'
 import ColorPicker from '../components/visuals/ColorPicker'
 import ReactMarkdown from 'react-markdown'
+import rehypeRaw from 'rehype-raw'
+import remarkGfm from 'remark-gfm'
 import AmbientBackground from '../components/visuals/AmbientBackground'
 import { api } from '../lib/api'
 
@@ -104,8 +107,13 @@ export default function Session() {
   const [sessionStarted, setSessionStarted] = useState(null)
   const [showPicker, setShowPicker] = useState(false)
   const [references, setReferences] = useState([])
+  const [showExport, setShowExport] = useState(false)
+  const [activeTest, setActiveTest] = useState(null)
+  const [testMinimized, setTestMinimized] = useState(false)
   const chatEnd = useRef(null)
   const chatContainerRef = useRef(null)
+  const streamingRef = useRef(false)
+  const streamVersionRef = useRef(0)
 
   // Session timer — counts up from first message
   useEffect(() => {
@@ -123,8 +131,13 @@ export default function Session() {
     try {
       const data = await api.getSession(id)
       setSession(data)
-      if (data.chatHistory?.length > 0) {
+      if (data.chatHistory?.length > 0 && !streamingRef.current) {
         setChat(data.chatHistory)
+        const lastTest = data.chatHistory.reduce((found, msg) => {
+          const tb = (msg.blocks || []).find(b => b.type === 'test')
+          return tb || found
+        }, null)
+        if (lastTest) setActiveTest(lastTest)
         if (data.chatHistory[0].created) {
           setSessionStarted(new Date(data.chatHistory[0].created).getTime())
         }
@@ -167,6 +180,9 @@ export default function Session() {
       const refContext = references.slice(0, 5).map((r, i) => `[Ref ${i + 1}]: ${r.slice(0, 200)}`).join('\n')
       msg = `${refContext}\n\n---\n\n${msg}`
     }
+    streamingRef.current = true
+    streamVersionRef.current += 1
+    const myVersion = streamVersionRef.current
     setInput('')
     setReferences([])
     const now = new Date()
@@ -192,6 +208,11 @@ export default function Session() {
           ))
         },
         onBlocks: (blocks) => {
+          const testBlock = blocks.find(b => b.type === 'test')
+          if (testBlock) {
+            setActiveTest(testBlock)
+            setTestMinimized(false)
+          }
           setChat(prev => prev.map(c =>
             c._id === assistantId ? { ...c, blocks } : c
           ))
@@ -200,13 +221,15 @@ export default function Session() {
           setChat(prev => prev.map(c =>
             c._id === assistantId ? { ...c, timestamp: new Date().toISOString(), streaming: false } : c
           ))
+          streamingRef.current = false
           setSending(false)
-          loadSession()
+          api.getSession(id).then(data => { if (myVersion === streamVersionRef.current) setSession(data) })
         },
         onError: () => {
           setChat(prev => prev.map(c =>
             c._id === assistantId ? { ...c, content: accumulatedText || 'Sorry, I had trouble responding. Try again?', streaming: false } : c
           ))
+          streamingRef.current = false
           setSending(false)
         }
       })
@@ -214,6 +237,7 @@ export default function Session() {
       setChat(prev => prev.map(c =>
         c._id === assistantId ? { ...c, content: accumulatedText || 'Sorry, I had trouble responding. Try again?', streaming: false } : c
       ))
+      streamingRef.current = false
       setSending(false)
     }
   }
@@ -268,7 +292,7 @@ export default function Session() {
               if (lang === 'html' || lang === 'sandbox') {
                 return <CodeSandbox key={i} html={code} title="Interactive Example" />
               }
-              return <ArtifactRenderer key={i} language={lang} code={code} />
+              return <ArtifactRenderer key={i} language={lang} code={code} onReference={(t) => handleReference(t)} />
             }
           }
           const isUser = role === 'user'
@@ -283,16 +307,24 @@ export default function Session() {
             '--tw-prose-quotes': isUser ? 'rgba(255,255,255,0.8)' : undefined,
             '--tw-prose-quote-borders': isUser ? 'var(--bauhaus-yellow)' : undefined,
             '--tw-prose-code': isUser ? 'var(--bauhaus-yellow)' : undefined,
-          }}><ReactMarkdown>{part}</ReactMarkdown></div>
+          }}><ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]}>{part}</ReactMarkdown></div>
         })}
-        {blocks && blocks.map((block, i) => (
+        {blocks && blocks.filter(b => b.type !== 'test').map((block, i) => (
           <div key={`block-${i}`} className="mt-4">
             {block.type === 'svg' && (
-              <ArtifactRenderer language="svg" code={block.code} />
+              <ArtifactRenderer language="svg" code={block.code} onReference={(t) => handleReference(t)} />
             )}
             {block.type === 'image' && (
-              <div className="border-[3px] border-[var(--bauhaus-black)] overflow-hidden">
-                <img src={block.url} alt={block.prompt || ''} className="w-full h-auto max-h-[60vh] object-contain" />
+              <div className="border-[3px] border-[var(--bauhaus-black)] overflow-hidden bg-[var(--bauhaus-white)]">
+                <div className="relative">
+                  <img src={block.url} alt={block.prompt || ''} className="w-full h-auto max-h-[60vh] object-contain" />
+                  <button
+                    onClick={() => handleReference(`Image: ${block.prompt || block.url}`)}
+                    className="absolute bottom-2 right-2 px-2 py-1 bg-[var(--bauhaus-black)] text-white text-[9px] font-bold uppercase tracking-wider opacity-0 hover:opacity-100 transition-opacity duration-200 cursor-pointer"
+                  >
+                    Reference
+                  </button>
+                </div>
               </div>
             )}
             {block.type === 'sandbox' && (
@@ -362,8 +394,16 @@ export default function Session() {
             {block.type === 'images' && block.data && block.data.length > 0 && (
               <div className="grid grid-cols-2 gap-2">
                 {block.data.map((img, j) => (
-                  <div key={j} className="border-[2px] border-[var(--bauhaus-black)] overflow-hidden">
+                  <div key={j} className="border-[2px] border-[var(--bauhaus-black)] overflow-hidden bg-[var(--bauhaus-white)] group/img relative">
                     <img src={img.url} alt={img.title || ''} className="w-full h-32 object-cover" />
+                    <div className="absolute inset-0 opacity-0 group-hover/img:opacity-100 transition-opacity duration-200 flex items-end justify-end p-1 bg-gradient-to-t from-black/30 to-transparent">
+                      <button
+                        onClick={() => handleReference(`Image${img.title ? ': ' + img.title : ''} ${img.url}`)}
+                        className="px-2 py-1 bg-[var(--bauhaus-black)] text-white text-[8px] font-bold uppercase tracking-wider cursor-pointer"
+                      >
+                        Ref
+                      </button>
+                    </div>
                     {img.title && <div className="text-[10px] p-1 truncate text-[var(--ink-dim)]">{img.title}</div>}
                   </div>
                 ))}
@@ -473,6 +513,21 @@ export default function Session() {
             </div>
           )}
           <Timer />
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              const text = chat.map(m => `${m.role === 'user' ? 'You' : 'MentorMind'} (${m.created ? new Date(m.created).toLocaleString() : ''}):\n${m.content}`).join('\n\n---\n\n')
+              const blob = new Blob([`# LearnMosaic Chat Export\n\n${text}`], { type: 'text/markdown' })
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement('a'); a.href = url; a.download = `chat-${id.slice(0, 8)}.md`; a.click()
+              URL.revokeObjectURL(url)
+              toast('Chat exported as markdown')
+            }}
+            className="px-3 py-1 text-[10px] uppercase tracking-wider text-white/70 hover:text-white transition-colors cursor-pointer"
+          >
+            EXPORT
+          </motion.button>
           <motion.button
             whileHover={{ rotate: 90 }}
             onClick={() => setShowPicker(!showPicker)}
@@ -603,7 +658,7 @@ export default function Session() {
                 initial={{ opacity: 0, y: 15, filter: 'blur(3px)' }}
                 animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                 transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`group flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div className={`max-w-[80%] md:max-w-[65%] ${msg.role === 'user' ? 'flex flex-col items-end' : 'flex flex-col items-start'}`}>
                   <div className="flex items-center gap-2 mb-1.5 px-1">
@@ -652,11 +707,29 @@ export default function Session() {
                       )}
                     </div>
                   </motion.div>
-                  {msg.created && (
-                    <span className="text-[9px] font-semibold tracking-[0.1em] uppercase opacity-30 mt-1 px-1">
-                      {formatTime(new Date(msg.created))}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2 mt-1 px-1">
+                    {!msg.streaming && (
+                      <button
+                        onClick={() => { navigator.clipboard.writeText(msg.content); toast('Copied!') }}
+                        className="text-[9px] font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 hover:opacity-100 text-[var(--ink-muted)] hover:text-[var(--ink)] transition-all duration-200 cursor-pointer"
+                      >
+                        Copy
+                      </button>
+                    )}
+                    {!msg.streaming && msg.role === 'assistant' && (
+                      <button
+                        onClick={() => handleReference(msg.content.slice(0, 300))}
+                        className="text-[9px] font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 hover:opacity-100 text-[var(--ink-muted)] hover:text-[var(--ink)] transition-all duration-200 cursor-pointer"
+                      >
+                        Reference
+                      </button>
+                    )}
+                    {msg.created && (
+                      <span className="text-[9px] font-semibold tracking-[0.1em] uppercase opacity-30">
+                        {formatTime(new Date(msg.created))}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -744,7 +817,7 @@ export default function Session() {
                               '--tw-prose-bold': 'var(--ink)',
                               '--tw-prose-links': 'var(--accent2)',
                             }}>
-                              <ReactMarkdown>{session.curriculum}</ReactMarkdown>
+                              <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]}>{session.curriculum}</ReactMarkdown>
                             </div>
                           </div>
                         </div>
@@ -763,7 +836,7 @@ export default function Session() {
                               '--tw-prose-bold': 'var(--ink)',
                               '--tw-prose-links': 'var(--accent2)',
                             }}>
-                              <ReactMarkdown>{session.thinkingBoard}</ReactMarkdown>
+                              <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]}>{session.thinkingBoard}</ReactMarkdown>
                             </div>
                           </div>
                         </div>
@@ -785,6 +858,17 @@ export default function Session() {
           )}
         </AnimatePresence>
       </div>
+
+      <AnimatePresence>
+        {activeTest && (
+          <QuizPanel
+            test={activeTest}
+            onClose={() => setActiveTest(null)}
+            onMinimize={() => setTestMinimized(!testMinimized)}
+            minimized={testMinimized}
+          />
+        )}
+      </AnimatePresence>
     </PageTransition>
   )
 }

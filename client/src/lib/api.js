@@ -13,6 +13,8 @@ async function req(path, options = {}) {
 }
 
 export const api = {
+  // Suggest
+  suggestRefine: (goal) => req('/sessions/suggest-refine', { method: 'POST', body: JSON.stringify({ goal }) }),
   // User
   listUsers: () => req('/sessions/users'),
   createUser: (data) => req('/users', { method: 'POST', body: JSON.stringify(data) }),
