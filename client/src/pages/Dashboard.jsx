@@ -88,10 +88,6 @@ export default function Dashboard() {
 
       <ProfilePanel user={user} sessions={sessions} open={showProfile} onClose={() => setShowProfile(false)} />
 
-      <AnimatePresence>
-        {showPicker && <ColorPicker onClose={() => setShowPicker(false)} />}
-      </AnimatePresence>
-
       <Modal
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
@@ -105,6 +101,10 @@ export default function Dashboard() {
       >
         <p>This will permanently delete <strong>"{deleteTarget?.goal}"</strong>. Cannot be undone.</p>
       </Modal>
+
+      <AnimatePresence>
+        {showPicker && <ColorPicker onClose={() => setShowPicker(false)} />}
+      </AnimatePresence>
 
       <div className="max-w-6xl mx-auto px-6 py-16 relative z-10">
         <div className="flex items-end justify-between mb-12 border-b-[4px] border-[var(--bauhaus-black)] pb-6">
@@ -221,15 +221,13 @@ export default function Dashboard() {
                         filter: ['blur(0px)', 'blur(0px)', 'blur(6px)']
                       } : {}}
                       transition={isDeleting ? { duration: 0.6, ease: [0.4, 0, 0.2, 1] } : {}}
-                      whileHover={!isDeleting ? { scale: 1.01, zIndex: 10 } : {}}
-                      whileTap={!isDeleting ? { scale: 0.99 } : {}}
                       className={`
-                        p-8 border-[2px] border-[var(--bauhaus-black)] cursor-pointer
+                        session-card p-8 border-[2px] border-[var(--bauhaus-black)] cursor-pointer
                         transition-all duration-200 relative overflow-visible
-                        ${cardColors[i % cardColors.length] === 'red' ? 'bg-[var(--bauhaus-red)] text-[var(--bauhaus-white)]' : ''}
-                        ${cardColors[i % cardColors.length] === 'blue' ? 'bg-[var(--bauhaus-blue)] text-[var(--bauhaus-white)]' : ''}
-                        ${cardColors[i % cardColors.length] === 'yellow' ? 'bg-[var(--bauhaus-yellow)] text-[var(--bauhaus-black)]' : ''}
-                        ${cardColors[i % cardColors.length] === 'black' ? 'bg-[var(--bauhaus-black)] text-[var(--bauhaus-white)]' : ''}
+                        ${cardColors[i % cardColors.length] === 'red' ? 'bg-[var(--bauhaus-red)] text-[var(--bauhaus-white)] card-red' : ''}
+                        ${cardColors[i % cardColors.length] === 'blue' ? 'bg-[var(--bauhaus-blue)] text-[var(--bauhaus-white)] card-blue' : ''}
+                        ${cardColors[i % cardColors.length] === 'yellow' ? 'bg-[var(--bauhaus-yellow)] text-[var(--bauhaus-black)] card-yellow' : ''}
+                        ${cardColors[i % cardColors.length] === 'black' ? 'bg-[var(--bauhaus-black)] text-[var(--bauhaus-white)] card-black' : ''}
                       `}
                     >
                       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
@@ -240,10 +238,8 @@ export default function Dashboard() {
 
                       <div className="relative z-10">
                         <div className="flex items-start justify-between mb-6">
-                          <motion.div
-                            whileHover={{ rotate: 90, scale: 1.1 }}
-                            transition={{ duration: 0.3 }}
-                            className="w-10 h-10 bg-white/20 flex items-center justify-center"
+                          <div
+                            className="w-10 h-10 bg-white/20 flex items-center justify-center hover:rotate-90 hover:scale-110 transition-transform duration-300"
                           >
                             {session.favorite ? (
                               <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--bauhaus-yellow)" stroke="currentColor" strokeWidth="1.5">
@@ -258,7 +254,7 @@ export default function Dashboard() {
                                 <path d="M4 8h8M8 4l4 4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter"/>
                               </svg>
                             )}
-                          </motion.div>
+                          </div>
                           <span className="text-[10px] uppercase tracking-wider font-medium">
                             {session.status}
                           </span>

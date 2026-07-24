@@ -6,7 +6,9 @@ import Button from '../components/ui/MagneticButton'
 import Input from '../components/ui/Input'
 import ProgressBar from '../components/ui/ProgressBar'
 import AmbientBackground from '../components/visuals/AmbientBackground'
+import ApiConfig from '../components/onboarding/ApiConfig'
 import { api } from '../lib/api'
+import { useTheme } from '../lib/ThemeProvider'
 
 const interests = [
   'Science', 'Technology', 'Mathematics', 'Art', 'Music',
@@ -23,6 +25,7 @@ const goals = [
 ]
 
 const stepIcons = [
+  <svg key="-1" width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12" stroke="currentColor" strokeWidth="2"/><circle cx="14" cy="14" r="4" fill="currentColor"/><path d="M14 2v4M14 22v4M2 14h4M22 14h4" stroke="currentColor" strokeWidth="2" strokeLinecap="square"/></svg>,
   <svg key="0" width="28" height="28" viewBox="0 0 28 28" fill="none"><circle cx="14" cy="14" r="12" stroke="currentColor" strokeWidth="2"/><circle cx="14" cy="10" r="4" fill="currentColor"/><path d="M6 24c0-4.4 3.6-8 8-8s8 3.6 8 8" stroke="currentColor" strokeWidth="2"/></svg>,
   <svg key="1" width="28" height="28" viewBox="0 0 28 28" fill="none"><path d="M14 3L26 25H2L14 3Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/><circle cx="14" cy="17" r="3" fill="currentColor"/></svg>,
   <svg key="2" width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="4" y="4" width="20" height="20" stroke="currentColor" strokeWidth="2"/><path d="M10 14l3 3 5-6" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter"/></svg>,
@@ -79,7 +82,10 @@ function FloatingShape({ type, size, color, x, y, delay }) {
 
 export default function Onboarding() {
   const navigate = useNavigate()
+  const { theme, setTheme } = useTheme()
   const [existingUser, setExistingUser] = useState(null)
+  const [showApiConfig, setShowApiConfig] = useState(false)
+  const [apiConfigDone, setApiConfigDone] = useState(false)
   const [step, setStep] = useState(0)
   const [loading, setLoading] = useState(false)
   const [loadingMsg, setLoadingMsg] = useState('')
@@ -104,18 +110,38 @@ export default function Onboarding() {
       setExistingUser(existingUserRaw)
       setStep(0)
     }
+    // Check if API key is configured
+    api.checkApi().then(s => {
+      if (!s.configured) {
+        setShowApiConfig(true)
+      } else {
+        setApiConfigDone(true)
+      }
+    }).catch(() => {
+      setShowApiConfig(true)
+    })
   }, [])
 
+  const handleApiConfigComplete = (config) => {
+    setApiConfigDone(true)
+    setShowApiConfig(false)
+  }
+
   const stepOffset = existingUser ? 1 : 0
-  const totalSteps = existingUser ? 6 : 6
+  const hasApiStep = showApiConfig || apiConfigDone
+  const totalSteps = hasApiStep ? (existingUser ? 6 : 7) : (existingUser ? 5 : 6)
 
-  const stepLabels = existingUser
-    ? ['Interests', 'Goal', 'Refine', 'Timeframe', 'Review']
-    : ['You', 'Interests', 'Goal', 'Refine', 'Timeframe', 'Review']
+  const stepLabels = hasApiStep
+    ? (existingUser
+        ? ['API', 'Interests', 'Goal', 'Refine', 'Timeframe', 'Review']
+        : ['API', 'You', 'Interests', 'Goal', 'Refine', 'Timeframe', 'Review'])
+    : (existingUser
+        ? ['Interests', 'Goal', 'Refine', 'Timeframe', 'Review']
+        : ['You', 'Interests', 'Goal', 'Refine', 'Timeframe', 'Review'])
 
-  const stepIconsList = existingUser
-    ? stepIcons.slice(1)
-    : stepIcons
+  const stepIconsList = hasApiStep
+    ? (existingUser ? stepIcons.slice(0, 6) : stepIcons.slice(0, 7))
+    : (existingUser ? stepIcons.slice(1) : stepIcons.slice(1))
 
   const getDisplayStep = () => existingUser ? step : step
 
@@ -134,8 +160,9 @@ export default function Onboarding() {
   }
 
   const canProceed = () => {
+    const s = hasApiStep ? step - 1 : step
     if (existingUser) {
-      switch (step) {
+      switch (s) {
         case 0: return profile.interests.length > 0 || profile.customInterest.trim()
         case 1: return profile.goal || profile.customGoal.trim()
         case 2: return profile.subGoal.trim().length >= 3
@@ -144,7 +171,7 @@ export default function Onboarding() {
         default: return true
       }
     }
-    switch (step) {
+    switch (s) {
       case 0: return profile.name.trim() && profile.age.trim()
       case 1: return profile.interests.length > 0 || profile.customInterest.trim()
       case 2: return profile.goal || profile.customGoal.trim()
@@ -166,7 +193,7 @@ export default function Onboarding() {
 
   const nextStep = () => {
     if (!canProceed()) { setError('Please fill in all fields'); return }
-    const lastStep = existingUser ? 4 : 5
+    const lastStep = hasApiStep ? (existingUser ? 5 : 6) : (existingUser ? 4 : 5)
     if (step < lastStep) setStep(s => s + 1)
     else handleCreate()
   }
@@ -262,8 +289,9 @@ export default function Onboarding() {
     )
   }
 
-  const lastStep = existingUser ? 4 : 5
+  const lastStep = hasApiStep ? (existingUser ? 5 : 6) : (existingUser ? 4 : 5)
   const displayStep = step
+  const contentStep = hasApiStep ? step - 1 : step
 
   return (
     <PageTransition className="min-h-[100dvh] flex flex-col relative overflow-hidden">
@@ -274,16 +302,37 @@ export default function Onboarding() {
 
       <div className="bg-[var(--bauhaus-black)] text-[var(--bauhaus-white)] px-6 py-3 flex items-center justify-between relative z-20">
         <motion.button
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
           whileHover={{ x: -3 }}
-          onClick={() => navigate('/dashboard')}
-          className="text-xs uppercase tracking-wider hover:text-[var(--bauhaus-yellow)] transition-colors cursor-pointer"
+          onClick={() => navigate(-1)}
+          className="text-xs uppercase tracking-wider text-white/60 hover:text-[var(--bauhaus-red)] transition-colors cursor-pointer"
         >
-          {'\u2190 Dashboard'}
+          ← Exit
         </motion.button>
         <span className="text-xs font-medium uppercase tracking-wider opacity-60">
           {existingUser ? 'New Session' : 'Get Started'}
         </span>
-        <div className="w-20" />
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setTheme({ darkMode: !theme.darkMode })}
+          className={`w-10 h-10 flex items-center justify-center border-[3px] border-[var(--bauhaus-black)] cursor-pointer transition-all duration-200 ${
+            theme.darkMode ? 'bg-[var(--bauhaus-black)] text-[var(--bauhaus-yellow)]' : 'bg-[var(--bauhaus-white)] text-[var(--bauhaus-black)]'
+          }`}
+          title={theme.darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
+            {theme.darkMode ? (
+              <>
+                <circle cx="12" cy="12" r="5" />
+                <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+              </>
+            ) : (
+              <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+            )}
+          </svg>
+        </motion.button>
       </div>
 
       <div className="flex-1 flex flex-col lg:flex-row relative z-10">
@@ -362,8 +411,13 @@ export default function Onboarding() {
                 exit="exit"
                 transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
               >
+                {/* Step: API Configuration */}
+                {hasApiStep && step === 0 && (
+                  <ApiConfig onComplete={handleApiConfigComplete} />
+                )}
+
                 {/* Step 0: Name & Age (only if no existing user) */}
-                {!existingUser && step === 0 && (
+                {!existingUser && contentStep === 0 && (
                   <div className="text-center">
                     <motion.div
                       initial={{ scale: 0, rotate: -90 }}
@@ -386,7 +440,7 @@ export default function Onboarding() {
                 )}
 
                 {/* Step: Interests */}
-                {(existingUser ? step === 0 : step === 1) && (
+                {(existingUser ? contentStep === 0 : contentStep === 1) && (
                   <div className="text-center">
                     <motion.div
                       initial={{ scale: 0, rotate: 90 }}
@@ -425,7 +479,7 @@ export default function Onboarding() {
                 )}
 
                 {/* Step: Goal (with resource upload toggle) */}
-                {(existingUser ? step === 1 : step === 2) && (
+                {(existingUser ? contentStep === 1 : contentStep === 2) && (
                   <div className="text-center">
                     <motion.div
                       initial={{ scale: 0, rotate: -45 }}
@@ -567,7 +621,7 @@ export default function Onboarding() {
                 )}
 
                 {/* Step: Goal Refinement (AI-guided) */}
-                {(existingUser ? step === 2 : step === 3) && (profile.goal || profile.customGoal) && (
+                {(existingUser ? contentStep === 2 : contentStep === 3) && (profile.goal || profile.customGoal) && (
                   <div className="text-center">
                     <motion.div
                       initial={{ scale: 0 }}
@@ -645,7 +699,7 @@ export default function Onboarding() {
                 )}
 
                 {/* Step: Timeframe (with custom option) */}
-                {(existingUser ? step === 3 : step === 4) && (
+                {(existingUser ? contentStep === 3 : contentStep === 4) && (
                   <div className="text-center">
                     <motion.div
                       initial={{ scale: 0, rotate: 180 }}
@@ -709,7 +763,7 @@ export default function Onboarding() {
                 )}
 
                 {/* Step: Review */}
-                {(existingUser ? step === 4 : step === 5) && (
+                {(existingUser ? contentStep === 4 : contentStep === 5) && (
                   <div className="text-center">
                     <motion.div
                       initial={{ scale: 0 }}
@@ -773,7 +827,7 @@ export default function Onboarding() {
               transition={{ delay: 0.4, duration: 0.4 }}
               className="flex justify-between mt-10"
             >
-              {step > (existingUser ? 0 : 0) ? (
+              {step > 0 ? (
                 <Button variant="ghost" onClick={() => setStep(s => s - 1)}>
                   {'\u2190 BACK'}
                 </Button>

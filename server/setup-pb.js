@@ -114,6 +114,17 @@ async function setup() {
         { name: 'created', type: 'autodate', system: true, onCreate: true, onUpdate: false },
         { name: 'updated', type: 'autodate', system: true, onCreate: true, onUpdate: true }
       ]
+    },
+    {
+      name: 'settings',
+      type: 'base',
+      fields: [
+        { name: 'aiProvider', type: 'text', max: 50 },
+        { name: 'aiModel', type: 'text', max: 100 },
+        { name: 'apiKey', type: 'text', max: 500 },
+        { name: 'baseUrl', type: 'text', max: 500 },
+        { name: 'updated', type: 'autodate', system: true, onCreate: true, onUpdate: true }
+      ]
     }
   ]
 
@@ -176,6 +187,26 @@ async function setup() {
     console.log('Creating artifacts collection...')
     const ac = newCollections.find(c => c.name === 'artifacts')
     if (ac) await api('/api/collections', { method: 'POST', headers, body: JSON.stringify(ac) })
+  }
+
+  // Migration: add settings collection if it doesn't exist
+  const settingsCol = existing.items.find(c => c.name === 'settings')
+  if (!settingsCol) {
+    console.log('Creating settings collection...')
+    const sc = newCollections.find(c => c.name === 'settings')
+    if (sc) {
+      try {
+        await api('/api/collections', { method: 'POST', headers, body: JSON.stringify(sc) })
+      } catch (e) {
+        if (e.message?.includes('name_exists')) {
+          console.log('Settings collection already exists — skipping')
+        } else {
+          throw e
+        }
+      }
+    }
+  } else {
+    console.log('Collection "settings" exists — skipping')
   }
 
   console.log('PocketBase schema setup complete!')

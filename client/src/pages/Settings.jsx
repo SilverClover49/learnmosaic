@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import PageTransition from '../components/layout/PageTransition'
 import Button from '../components/ui/MagneticButton'
 import AmbientBackground from '../components/visuals/AmbientBackground'
-import ColorPicker from '../components/visuals/ColorPicker'
 import { api } from '../lib/api'
 
 const PROVIDERS = [
@@ -30,7 +29,6 @@ export default function Settings() {
     baseUrl: ''
   })
   const [saved, setSaved] = useState(false)
-  const [showPicker, setShowPicker] = useState(false)
 
   useEffect(() => {
     api.getSettings().then(setSettings).catch(() => {})
@@ -81,21 +79,6 @@ export default function Settings() {
       <div className="color-dna-strip z-10 relative">
         <div /><div /><div /><div /><div />
       </div>
-
-      <motion.button
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        onClick={() => setShowPicker(!showPicker)}
-        className="fixed top-8 right-8 z-[var(--z-dropdown)] w-10 h-10 bg-[var(--bauhaus-black)] text-[var(--bauhaus-white)] flex items-center justify-center cursor-pointer hover:bg-[var(--bauhaus-red)] transition-all duration-200"
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
-          <circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-        </svg>
-      </motion.button>
-
-      <AnimatePresence>
-        {showPicker && <ColorPicker onClose={() => setShowPicker(false)} />}
-      </AnimatePresence>
 
       <div className="max-w-lg mx-auto px-6 py-16 relative z-10">
         <motion.button

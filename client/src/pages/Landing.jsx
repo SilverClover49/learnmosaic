@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import PageTransition from '../components/layout/PageTransition'
 import Button from '../components/ui/Button'
-import ColorPicker from '../components/visuals/ColorPicker'
 import { api } from '../lib/api'
+import { useTheme } from '../lib/ThemeProvider'
 
 const taglines = [
   'ready to learn?',
@@ -29,8 +29,8 @@ const fadeUp = {
 
 export default function Landing() {
   const navigate = useNavigate()
+  const { theme, setTheme } = useTheme()
   const [tagline, setTagline] = useState(0)
-  const [showPicker, setShowPicker] = useState(false)
   const [users, setUsers] = useState([])
   const [showUsers, setShowUsers] = useState(false)
 
@@ -50,26 +50,34 @@ export default function Landing() {
 
   return (
     <PageTransition className="min-h-[100dvh] flex flex-col relative">
+      {/* Dark/Light mode toggle - top right */}
+      <motion.button
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => setTheme({ darkMode: !theme.darkMode })}
+        className={`absolute top-6 right-6 z-20 w-10 h-10 flex items-center justify-center border-[3px] border-[var(--bauhaus-black)] cursor-pointer transition-all duration-200 ${
+          theme.darkMode ? 'bg-[var(--bauhaus-black)] text-[var(--bauhaus-yellow)]' : 'bg-[var(--bauhaus-white)] text-[var(--bauhaus-black)]'
+        }`}
+        title={theme.darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
+          {theme.darkMode ? (
+            <>
+              <circle cx="12" cy="12" r="5" />
+              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+            </>
+          ) : (
+            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+          )}
+        </svg>
+      </motion.button>
+
       {/* Color DNA Strip */}
       <div className="color-dna-strip">
         <div /><div /><div /><div /><div />
       </div>
-
-      {/* Theme button */}
-      <motion.button
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        onClick={() => setShowPicker(!showPicker)}
-        className="fixed top-8 right-8 z-[var(--z-dropdown)] w-10 h-10 bg-[var(--bauhaus-black)] text-[var(--bauhaus-white)] flex items-center justify-center cursor-pointer hover:bg-[var(--bauhaus-red)] transition-all duration-200"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
-          <circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-        </svg>
-      </motion.button>
-
-      <AnimatePresence>
-        {showPicker && <ColorPicker onClose={() => setShowPicker(false)} />}
-      </AnimatePresence>
 
       {/* Main content - Asymmetric 40/60 split */}
       <div className="flex-1 flex flex-col lg:flex-row">
@@ -216,7 +224,7 @@ export default function Landing() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
-        className="p-6 border-t-[4px] border-[var(--bauhaus-black)] flex justify-between items-center"
+        className="p-6 border-t-[4px] border-[var(--bauhaus-black)] bg-[var(--bg)] flex justify-between items-center"
       >
         <span className="text-xs font-medium uppercase tracking-wider text-[var(--ink-muted)]">
           LearnMosaic · AI-Powered Learning

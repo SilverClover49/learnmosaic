@@ -3,7 +3,6 @@ import { generateImage } from './imagegen.js'
 import { storeMemory, recallMemories } from './memory.js'
 import { createArtifact, listArtifacts } from './artifacts.js'
 import { callAI } from './openrouter.js'
-import { getSettings } from './settings.js'
 
 // Minimal SVG validation — checks XML structure and common issues
 function validateSvg(code) {
@@ -40,12 +39,15 @@ async function correctSvg(brokenCode, description, settings) {
 
 async function generateSvgWithCorrection(parsed, settings) {
   let code = parsed.code
+  const original = code
   let description = parsed.description || 'SVG diagram'
   for (let attempt = 0; attempt < 3; attempt++) {
     const issues = validateSvg(code)
     if (issues.length === 0) break
     code = await correctSvg(code, description + ` (attempt ${attempt + 1} had issues: ${issues.join(', ')})`, settings)
   }
+  // If still broken after corrections, fall back to original
+  if (validateSvg(code).length > 0) code = original
   // Ensure responsive viewBox
   if (!/style\s*=\s*["']/.test(code.match(/<svg[\s\S]*?>/)?.[0] || '')) {
     code = code.replace(/<svg/i, '<svg style="max-width:100%;height:auto;max-height:60vh"')

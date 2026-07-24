@@ -2,18 +2,26 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 
 const ThemeContext = createContext()
 
+const DEFAULTS = {
+  texture: 'none',
+  density: 'standard',
+  borderWeight: 4,
+  cornerRadius: 0,
+  motionSpeed: 'standard',
+  ambientShapes: true,
+  darkMode: false
+}
+
 export function ThemeProvider({ children }) {
   const [theme, setThemeState] = useState(() => {
     const saved = localStorage.getItem('learnmosaic-theme')
-    return saved ? JSON.parse(saved) : {
-      texture: 'kandinsky',
-      density: 'standard',
-      borderWeight: 4,
-      cornerRadius: 0,
-      motionSpeed: 'standard',
-      ambientShapes: true,
-      darkMode: false
+    let parsed = saved ? JSON.parse(saved) : null
+    // Reset old ColorPicker format themes
+    if (parsed && ('particles' in parsed || 'name' in parsed || 'glass' in parsed)) {
+      localStorage.removeItem('learnmosaic-theme')
+      parsed = null
     }
+    return parsed ? { ...DEFAULTS, ...parsed } : { ...DEFAULTS }
   })
 
   const setTheme = useCallback((updates) => {
@@ -28,7 +36,7 @@ export function ThemeProvider({ children }) {
     const root = document.documentElement
 
     // Texture
-    root.classList.remove('texture-noise', 'texture-grain', 'texture-kandinsky')
+    root.classList.remove('texture-noise', 'texture-grain', 'texture-grid', 'texture-isometric')
     if (theme.texture !== 'none') root.classList.add(`texture-${theme.texture}`)
 
     // Density — affects spacing via CSS variable

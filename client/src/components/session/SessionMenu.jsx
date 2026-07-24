@@ -1,6 +1,13 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
+let activeMenus = new Set()
+
+function closeAllMenus() {
+  activeMenus.forEach(fn => fn(false))
+  activeMenus.clear()
+}
+
 export default function SessionMenu({ session, onDelete, onRename, onToggleFavorite }) {
   const [open, setOpen] = useState(false)
   const [renaming, setRenaming] = useState(false)
@@ -9,10 +16,20 @@ export default function SessionMenu({ session, onDelete, onRename, onToggleFavor
   const inputRef = useRef(null)
 
   useEffect(() => {
-    const handleClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
+    if (open) {
+      activeMenus.add(setOpen)
+      const handler = (e) => {
+        if (ref.current && !ref.current.contains(e.target)) {
+          closeAllMenus()
+        }
+      }
+      document.addEventListener('mousedown', handler, { once: true })
+      return () => {
+        document.removeEventListener('mousedown', handler)
+        activeMenus.delete(setOpen)
+      }
+    }
+  }, [open])
 
   useEffect(() => {
     if (renaming && inputRef.current) {
@@ -31,34 +48,38 @@ export default function SessionMenu({ session, onDelete, onRename, onToggleFavor
 
   return (
     <div ref={ref} className="absolute bottom-4 right-4 z-30">
-      <motion.button
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        animate={open ? { rotate: 180 } : { rotate: 0 }}
-        transition={{ duration: 0.3, ease: [0.32, 0.72, 0, 1] }}
-        className="w-8 h-8 bg-white/20 hover:bg-white/30 flex items-center justify-center cursor-pointer"
-        onClick={(e) => { e.stopPropagation(); setOpen(!open) }}
+      <button
+        className="w-8 h-8 bg-white/20 hover:bg-white/30 flex items-center justify-center cursor-pointer transition-transform duration-150 hover:scale-110 active:scale-90"
+        onClick={(e) => {
+          e.stopPropagation()
+          if (open) {
+            closeAllMenus()
+          } else {
+            closeAllMenus()
+            setOpen(true)
+          }
+        }}
       >
         <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
           <circle cx="7" cy="2.5" r="1.5" />
           <circle cx="7" cy="7" r="1.5" />
           <circle cx="7" cy="11.5" r="1.5" />
         </svg>
-      </motion.button>
+      </button>
 
       <AnimatePresence>
         {open && !renaming && (
           <motion.div
-            initial={{ opacity: 0, rotate: -15, scale: 0.85, y: -8 }}
-            animate={{ opacity: 1, rotate: 0, scale: 1, y: 0 }}
-            exit={{ opacity: 0, rotate: -15, scale: 0.85, y: -8 }}
-            transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.15 }}
             className="absolute bottom-full right-0 mb-2 w-44 bg-[var(--bauhaus-black)] border-[2px] border-[var(--bauhaus-black)] shadow-xl z-40 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               className="w-full flex items-center gap-3 px-4 py-3 text-xs uppercase tracking-wider text-[var(--bauhaus-white)] hover:bg-white/10 transition-colors cursor-pointer"
-              onClick={() => { onToggleFavorite(session.id, !session.favorite); setOpen(false) }}
+              onClick={() => { onToggleFavorite(session.id, !session.favorite); closeAllMenus() }}
             >
               <svg width="12" height="12" viewBox="0 0 16 16" fill={session.favorite ? 'var(--bauhaus-yellow)' : 'none'} stroke="currentColor" strokeWidth="1.5">
                 <path d="M8 1l2 5h5l-4 3.5 1.5 5L8 11.5 3.5 14.5 5 9.5 1 6h5l2-5Z" strokeLinecap="square" strokeLinejoin="miter"/>
@@ -78,7 +99,7 @@ export default function SessionMenu({ session, onDelete, onRename, onToggleFavor
             <div className="border-t-[1px] border-white/20" />
             <button
               className="w-full flex items-center gap-3 px-4 py-3 text-xs uppercase tracking-wider text-[var(--bauhaus-red)] hover:bg-red-500/10 transition-colors cursor-pointer"
-              onClick={() => { setOpen(false); onDelete(session) }}
+              onClick={() => { closeAllMenus(); onDelete(session) }}
             >
               <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path d="M2 4h12M5 4V2a1 1 0 011-1h4a1 1 0 011 1v2M13 4v10a1 1 0 01-1 1H4a1 1 0 01-1-1V4" strokeLinecap="square"/>
@@ -92,11 +113,11 @@ export default function SessionMenu({ session, onDelete, onRename, onToggleFavor
       <AnimatePresence>
         {renaming && (
           <motion.div
-            initial={{ opacity: 0, rotate: -10, scale: 0.9, y: -8 }}
-            animate={{ opacity: 1, rotate: 0, scale: 1, y: 0 }}
-            exit={{ opacity: 0, rotate: -10, scale: 0.9, y: -8 }}
-            transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
-            className="absolute bottom-full right-0 mb-2 w-56 bg-white border-[2px] border-[var(--bauhaus-black)] shadow-xl z-40 overflow-hidden"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.15 }}
+            className="absolute bottom-full right-0 mb-2 w-56 bg-[var(--surface)] border-[2px] border-[var(--bauhaus-black)] shadow-xl z-40 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-3">
@@ -115,8 +136,8 @@ export default function SessionMenu({ session, onDelete, onRename, onToggleFavor
                   onClick={handleRename}
                 >SAVE</button>
                 <button
-                  className="flex-1 py-2 text-[10px] uppercase tracking-wider border-[2px] border-[var(--bauhaus-black)] cursor-pointer hover:bg-gray-100 transition-colors"
-                  onClick={() => { setRenaming(false); setNewName(session.name); setOpen(false) }}
+                  className="flex-1 py-2 text-[10px] uppercase tracking-wider border-[2px] border-[var(--bauhaus-black)] cursor-pointer hover:bg-[var(--surface-alt)] transition-colors"
+                  onClick={() => { setRenaming(false); setNewName(session.name); closeAllMenus() }}
                 >CANCEL</button>
               </div>
             </div>

@@ -59,7 +59,8 @@ export const pb = {
 
   // Sessions
   listSessions: async () => {
-    const res = await api('GET', '/api/collections/sessions/records?sort=-created')
+    const fields = 'id,name,goal,status,favorite,timeframe,created,interests,profileId,completedAt'
+    const res = await api('GET', `/api/collections/sessions/records?sort=-created&fields=${fields}`)
     return res?.items || []
   },
 
@@ -150,5 +151,15 @@ export const pb = {
     for (const a of (res?.items || [])) {
       await api('DELETE', `/api/collections/artifacts/records/${a.id}`)
     }
-  }
+  },
+
+  // Settings (global)
+  getGlobalSettings: async () => {
+    const res = await api('GET', '/api/collections/settings/records?perPage=1')
+    return res?.items?.[0] || null
+  },
+
+  updateGlobalSettings: async (id, data) => api('PATCH', `/api/collections/settings/records/${id}`, data),
+
+  createGlobalSettings: (data) => api('POST', '/api/collections/settings/records', data),
 }

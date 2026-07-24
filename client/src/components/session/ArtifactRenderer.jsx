@@ -16,8 +16,6 @@ export default function ArtifactRenderer({ language, code, imageUrl, onReference
   const isDiagram = language === 'diagram' || language === 'mermaid'
   const isVisual = language === 'html'
 
-  const referenceLabel = isSvg ? `SVG diagram${code.match(/viewBox="[^"]*"?\s*width="([^"]*)"/)?.[1] ? ` (${code.match(/viewBox="[^"]*"?\s*width="([^"]*)"/)[1]})` : ''}` : null
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}

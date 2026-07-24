@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 
 function QuizQuestion({ q, index, answers, onAnswer, submitted }) {
   const [codeInput, setCodeInput] = useState(q.starterCode || '')
@@ -83,20 +83,18 @@ export default function QuizPanel({ test, onClose, onMinimize, minimized }) {
   }
 
   const handleSubmit = () => {
+    const scored = questions.filter(q => q.type !== 'code')
+    const codeCount = questions.length - scored.length
     let correct = 0
-    questions.forEach(q => {
-      if (q.type === 'code') {
-        correct++
-        return
-      }
+    scored.forEach(q => {
       if (answers[q.id] === q.answer) correct++
     })
-    setScore({ correct, total: questions.length })
+    setScore({ correct, total: scored.length, codeCount })
     setSubmitted(true)
   }
 
   function getScoreColor() {
-    if (!score) return ''
+    if (!score || score.total === 0) return 'var(--bauhaus-blue)'
     const pct = score.correct / score.total
     if (pct >= 0.8) return 'var(--bauhaus-blue)'
     if (pct >= 0.5) return 'var(--bauhaus-yellow)'
@@ -120,6 +118,7 @@ export default function QuizPanel({ test, onClose, onMinimize, minimized }) {
   }
 
   const answered = questions.filter(q => q.type === 'code' || answers[q.id] !== undefined).length
+  const scoredCount = questions.filter(q => q.type !== 'code').length
 
   return (
     <motion.div
@@ -165,6 +164,7 @@ export default function QuizPanel({ test, onClose, onMinimize, minimized }) {
             <div className="text-xs font-bold uppercase tracking-wider mt-1">
               {score.correct === score.total ? 'Perfect Score!' : score.correct / score.total >= 0.8 ? 'Great Job!' : score.correct / score.total >= 0.5 ? 'Keep Practicing' : 'Review Needed'}
             </div>
+            {score.codeCount > 0 && <div className="text-[9px] opacity-70 mt-1">{score.codeCount} code question{score.codeCount > 1 ? 's' : ''} (review manually)</div>}
           </div>
         )}
 
@@ -188,7 +188,7 @@ export default function QuizPanel({ test, onClose, onMinimize, minimized }) {
               disabled={answered < questions.length}
               className="flex-1 py-2.5 bg-[var(--bauhaus-red)] text-white text-xs font-bold uppercase tracking-wider border-[3px] border-[var(--bauhaus-black)] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
             >
-              Submit ({answered}/{questions.length})
+              Submit ({answered}/{questions.length}){scoredCount < questions.length ? ' (code auto-graded)' : ''}
             </motion.button>
           )}
           {submitted && (

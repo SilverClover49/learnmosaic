@@ -94,5 +94,6 @@ export const api = {
   // Settings
   getSettings: () => req('/settings'),
   saveSettings: (data) => req('/settings', { method: 'PUT', body: JSON.stringify(data) }),
+  checkApi: () => req('/settings/check'),
 
 }

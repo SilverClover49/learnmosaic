@@ -12,7 +12,10 @@ import Credits from './pages/Credits'
 import Settings from './pages/Settings'
 import ToastContainer from './components/ui/Toast'
 import CursorFollower from './components/visuals/CursorFollower'
+import AmbientBackground from './components/visuals/AmbientBackground'
 import { useTheme } from './lib/ThemeProvider'
+
+const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.includes('Firefox')
 
 function ScrollToTop() {
   const { pathname } = useLocation()
@@ -25,7 +28,9 @@ export default function App() {
 
   return (
     <>
-      <CursorFollower />
+      {!isFirefox && <CursorFollower />}
+      <AmbientBackground />
+      <div className="glow-overlay" />
       <ToastContainer />
       <ScrollToTop />
       <AnimatePresence mode="wait">

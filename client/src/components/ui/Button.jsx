@@ -5,7 +5,7 @@ export default function Button({ children, variant = 'primary', size = 'md', cla
 
   const variants = {
     primary: 'bg-[var(--bauhaus-red)] text-[var(--bauhaus-white)] hover:brightness-110',
-    secondary: 'bg-transparent border-[4px] border-[var(--bauhaus-black)] text-[var(--ink)] hover:bg-[var(--ink)] hover:text-[var(--bauhaus-white)]',
+    secondary: 'bg-transparent border-[4px] border-[var(--bauhaus-black)] text-[var(--ink)] hover:bg-[var(--bauhaus-yellow)] hover:text-[var(--bauhaus-black)]',
     ghost: 'text-[var(--ink)] hover:text-[var(--bauhaus-red)] border-b-2 border-transparent hover:border-[var(--bauhaus-red)]',
     accent: 'bg-[var(--bauhaus-blue)] text-[var(--bauhaus-white)] hover:brightness-110',
     yellow: 'bg-[var(--bauhaus-yellow)] text-[var(--bauhaus-black)] hover:brightness-105'

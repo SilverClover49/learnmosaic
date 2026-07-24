@@ -1,11 +1,25 @@
 import { useEffect, useRef } from 'react'
 import { useTheme } from '../../lib/ThemeProvider'
 
-const COLORS = [
-  'rgba(230,57,70,0.25)',
-  'rgba(29,53,87,0.22)',
-  'rgba(244,211,94,0.20)',
-  'rgba(0,0,0,0.10)'
+const COLORS_LIGHT = [
+  'rgba(230,57,70,0.32)',
+  'rgba(29,53,87,0.28)',
+  'rgba(244,211,94,0.30)',
+  'rgba(0,0,0,0.08)'
+]
+
+const COLORS_DARK = [
+  'rgba(255,77,90,0.22)',
+  'rgba(90,141,184,0.20)',
+  'rgba(255,217,102,0.18)',
+  'rgba(255,255,255,0.05)'
+]
+
+const GLOW_COLORS_DARK = [
+  'rgba(255,77,90,0.35)',
+  'rgba(90,141,184,0.30)',
+  'rgba(255,217,102,0.28)',
+  'rgba(255,255,255,0.08)'
 ]
 
 const TYPES = ['circle', 'square', 'triangle']
@@ -23,14 +37,11 @@ export default function AmbientBackground({ variant = 'default' }) {
     let animId
     let time = 0
 
-    const resize = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
-    }
-    resize()
-    window.addEventListener('resize', resize)
-
     const speedMul = theme.motionSpeed === 'reduced' ? 0.3 : theme.motionSpeed === 'enhanced' ? 2 : 1
+
+    const isDark = document.documentElement.classList.contains('dark-mode')
+    const colors = isDark ? COLORS_DARK : COLORS_LIGHT
+    const glowColors = isDark ? GLOW_COLORS_DARK : colors
 
     const shapes = Array.from({ length: 18 }, () => ({
       x: Math.random() * canvas.width,
@@ -41,8 +52,27 @@ export default function AmbientBackground({ variant = 'default' }) {
       rotation: Math.random() * Math.PI * 2,
       rotSpeed: (Math.random() - 0.5) * 0.004 * speedMul,
       type: TYPES[Math.floor(Math.random() * 3)],
-      color: COLORS[Math.floor(Math.random() * COLORS.length)]
+      color: colors[Math.floor(Math.random() * colors.length)],
+      glowColor: glowColors[Math.floor(Math.random() * glowColors.length)],
+      glowSize: isDark ? 15 + Math.random() * 20 : 0
     }))
+
+    const preResize = () => {
+      const oldW = canvas.width
+      const oldH = canvas.height
+      canvas.width = window.innerWidth
+      canvas.height = window.innerHeight
+      if (oldW > 0 && oldH > 0) {
+        const sx = canvas.width / oldW
+        const sy = canvas.height / oldH
+        for (const s of shapes) {
+          s.x *= sx
+          s.y *= sy
+        }
+      }
+    }
+    preResize()
+    window.addEventListener('resize', preResize)
 
     const draw = () => {
       time += 0.004
@@ -64,27 +94,36 @@ export default function AmbientBackground({ variant = 'default' }) {
         ctx.rotate(s.rotation)
         ctx.fillStyle = s.color
 
+        if (isDark) {
+          ctx.strokeStyle = 'rgba(255,255,255,0.25)'
+          ctx.lineWidth = 1.5
+        }
+
+        if (s.glowSize > 0) {
+          ctx.shadowColor = s.glowColor
+          ctx.shadowBlur = s.glowSize
+        }
+
+        ctx.beginPath()
+
         if (s.type === 'circle') {
-          ctx.beginPath()
           ctx.arc(0, 0, s.size / 2, 0, Math.PI * 2)
-          ctx.fill()
         } else if (s.type === 'square') {
           const r = theme.cornerRadius || 0
           if (r > 0) {
-            ctx.beginPath()
             ctx.roundRect(-s.size / 2, -s.size / 2, s.size, s.size, r)
-            ctx.fill()
           } else {
-            ctx.fillRect(-s.size / 2, -s.size / 2, s.size, s.size)
+            ctx.rect(-s.size / 2, -s.size / 2, s.size, s.size)
           }
         } else {
-          ctx.beginPath()
           ctx.moveTo(0, -s.size / 2)
           ctx.lineTo(s.size / 2, s.size / 2)
           ctx.lineTo(-s.size / 2, s.size / 2)
           ctx.closePath()
-          ctx.fill()
         }
+
+        ctx.fill()
+        if (isDark) ctx.stroke()
 
         ctx.restore()
       }
@@ -96,7 +135,7 @@ export default function AmbientBackground({ variant = 'default' }) {
 
     return () => {
       cancelAnimationFrame(animId)
-      window.removeEventListener('resize', resize)
+      window.removeEventListener('resize', preResize)
     }
   }, [theme.ambientShapes, theme.motionSpeed, theme.cornerRadius, variant])
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import PageTransition from '../components/layout/PageTransition'
@@ -13,7 +13,6 @@ import CodeSandbox from '../components/session/CodeSandbox'
 import Timer from '../components/session/Timer'
 import QuizPanel from '../components/session/QuizPanel'
 import PresentationViewer from '../components/session/PresentationViewer'
-import ColorPicker from '../components/visuals/ColorPicker'
 import ReactMarkdown from 'react-markdown'
 import rehypeRaw from 'rehype-raw'
 import remarkGfm from 'remark-gfm'
@@ -105,9 +104,7 @@ export default function Session() {
   const [navOpen, setNavOpen] = useState(false)
   const [sessionSeconds, setSessionSeconds] = useState(0)
   const [sessionStarted, setSessionStarted] = useState(null)
-  const [showPicker, setShowPicker] = useState(false)
   const [references, setReferences] = useState([])
-  const [showExport, setShowExport] = useState(false)
   const [activeTest, setActiveTest] = useState(null)
   const [testMinimized, setTestMinimized] = useState(false)
   const chatEnd = useRef(null)
@@ -528,15 +525,6 @@ export default function Session() {
           >
             EXPORT
           </motion.button>
-          <motion.button
-            whileHover={{ rotate: 90 }}
-            onClick={() => setShowPicker(!showPicker)}
-            className="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white transition-colors cursor-pointer"
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
-              <circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-            </svg>
-          </motion.button>
           <button
             onClick={() => setShowSidebar(!showSidebar)}
             className="px-3 py-1 text-xs uppercase tracking-wider hover:text-[var(--bauhaus-yellow)] transition-colors cursor-pointer"
@@ -565,12 +553,6 @@ export default function Session() {
         </div>
       </div>
 
-      {/* Color Picker */}
-      <div className="fixed top-4 right-4 z-[var(--z-modal)]">
-        <AnimatePresence>
-          {showPicker && <ColorPicker onClose={() => setShowPicker(false)} />}
-        </AnimatePresence>
-      </div>
 
       {/* Mobile nav overlay */}
       <AnimatePresence>
@@ -676,8 +658,8 @@ export default function Session() {
                     whileHover={{ scale: 1.005 }}
                     className={`${
                       msg.role === 'user'
-                        ? 'bg-[var(--bauhaus-blue)] text-[var(--bauhaus-white)] rounded-t-[20px] rounded-bl-[20px] rounded-br-[4px]'
-                        : 'bg-[var(--bauhaus-white)] text-[var(--ink)] border-[3px] border-[var(--bauhaus-red)] rounded-tl-[4px] rounded-tr-[20px] rounded-b-[20px]'
+                        ? 'chat-user-bubble bg-[var(--bauhaus-blue)] text-[var(--bauhaus-white)] rounded-t-[20px] rounded-bl-[20px] rounded-br-[4px]'
+                        : 'chat-ai-bubble bg-[var(--bauhaus-white)] text-[var(--ink)] border-[3px] border-[var(--bauhaus-red)] rounded-tl-[4px] rounded-tr-[20px] rounded-b-[20px]'
                     }`}
                   >
                     <div className="px-5 py-3">
