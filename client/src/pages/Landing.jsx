@@ -90,9 +90,7 @@ export default function Landing() {
         >
           {/* Logo mark */}
           <motion.div variants={fadeUp} className="mb-12">
-            <div className="w-20 h-20 bg-[var(--bauhaus-red)] flex items-center justify-center">
-              <span className="text-4xl font-black text-[var(--bauhaus-white)]">L</span>
-            </div>
+            <img src="/logo.svg" alt="LearnMosaic" className="w-20 h-20" />
           </motion.div>
 
           {/* Eyebrow */}

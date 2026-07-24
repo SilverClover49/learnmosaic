@@ -1,6 +1,6 @@
 import { callAI, streamAI } from './openrouter.js'
 import { toolDefinitions, executeToolCalls } from './tools.js'
-import { recallMemories, storeMemory, updateSessionSummary } from './memory.js'
+import { recallMemories, recallCrossSessionMemories, storeMemory, updateSessionSummary } from './memory.js'
 import { listArtifacts } from './artifacts.js'
 import { getSettings } from './settings.js'
 import { pb } from './pb.js'
@@ -20,15 +20,20 @@ function getTimeOfDay(now) {
 }
 
 async function buildSystemPrompt(meta, message, sessionId, now, sessionDuration) {
-  const [memories, artifacts, tutorPrompt, toolsPrompt] = await Promise.all([
+  const [memories, crossMemories, artifacts, tutorPrompt, toolsPrompt] = await Promise.all([
     recallMemories(sessionId, message),
+    meta.profileId ? recallCrossSessionMemories(meta.profileId, message) : Promise.resolve([]),
     listArtifacts(sessionId),
     loadPrompt('tutor.md'),
     loadPrompt('tools.md')
   ])
 
   const memoryContext = memories.length > 0
-    ? `\n\n## What I Remember About This Student\n${memories.map(m => `- ${m.key}: ${m.value}`).join('\n')}`
+    ? `\n\n## What I Remember About This Session\n${memories.map(m => `- ${m.key}: ${m.value}`).join('\n')}`
+    : ''
+
+  const crossSessionContext = crossMemories.length > 0
+    ? `\n\n## What I Know From Past Sessions\n${crossMemories.map(m => `- ${m.key}: ${m.value}`).join('\n')}`
     : ''
 
   const artifactContext = artifacts.length > 0
@@ -45,7 +50,7 @@ async function buildSystemPrompt(meta, message, sessionId, now, sessionDuration)
     ? `\n\n## Student-Provided Materials\nThese materials were provided by the student and should be treated as the PRIMARY reference — ~70% of your responses should draw from or reference these materials:\n${materials.map((m, i) => `\n### Material ${i + 1}: ${typeof m === 'string' ? m : m.name || 'Unnamed'}\n${typeof m === 'string' ? '' : `Type: ${m.type || 'unknown'}\nSize: ${m.size || 'unknown'}`}`).join('\n')}\n\n**Important**: Center your teaching around these materials. Use external knowledge only to supplement or clarify what the student has provided.`
     : ''
 
-  return (tutorPrompt + toneInstruction + materialContext + '\n\n' + toolsPrompt + memoryContext + artifactContext)
+  return (tutorPrompt + toneInstruction + materialContext + '\n\n' + toolsPrompt + memoryContext + crossSessionContext + artifactContext)
     .replace(/{name}/g, meta.name)
     .replace(/{age}/g, ageNum != null ? String(ageNum) : 'unknown')
     .replace(/{interests}/g, (meta.interests || []).join(', '))
@@ -121,10 +126,8 @@ async function persistChat(sessionId, message, response, blocks, meta, now, sett
     await pb.updateSession(sessionId, { thinkingBoard: updatedBoard, chatCount: newCount })
   }
 
-  // Extract facts every 3 messages (not every message — saves tokens)
-  if (newCount % 3 === 0) {
-    await extractFacts(sessionId, message, botMsg, settings)
-  }
+  // Extract facts from every message to capture all personal info
+  await extractFacts(sessionId, message, botMsg, settings)
 }
 
 export async function handleChat(req, res) {
@@ -157,6 +160,11 @@ export async function handleChat(req, res) {
   let toolCallBuffers = null
   let hasToolCalls = false
 
+  // SSE heartbeat every 10s so client knows connection is alive
+  const heartbeat = setInterval(() => {
+    sendSSE({ type: 'ping' })
+  }, 10000)
+
   try {
     // First streaming call
     for await (const event of streamAI({ system, messages: aiMessages, tools: toolDefinitions, settings })) {
@@ -183,7 +191,7 @@ export async function handleChat(req, res) {
         function: { name: tc.function.name, arguments: tc.function.arguments }
       }))
 
-      const toolResults = await executeToolCalls(toolCalls, sessionId, settings)
+      const toolResults = await executeToolCalls(toolCalls, sessionId, settings, meta.profileId)
       blocks = toolResults.filter(r => r.block).map(r => r.block)
 
       const toolMessages = [
@@ -209,12 +217,14 @@ export async function handleChat(req, res) {
       sendSSE({ type: 'blocks', blocks })
     }
     sendSSE({ type: 'done' })
+    clearInterval(heartbeat)
     res.end()
 
     // Persist after streaming completes
     await persistChat(sessionId, message, finalText, blocks, meta, now, settings)
   } catch (e) {
     sendSSE({ type: 'error', text: e.message })
+    clearInterval(heartbeat)
     res.end()
   }
 }

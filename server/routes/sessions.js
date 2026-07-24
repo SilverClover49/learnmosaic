@@ -16,10 +16,10 @@ const upload = multer({ dest: UPLOAD_DIR })
 
 const router = Router()
 
-// List all sessions
+// List sessions (optionally filtered by profileId)
 router.get('/', async (req, res) => {
   try {
-    const data = await pb.listSessions()
+    const data = await pb.listSessions(req.query.profileId || null)
     res.json(data)
   } catch (e) {
     res.status(500).json({ error: e.message })
@@ -58,6 +58,11 @@ router.post('/', async (req, res) => {
     ageNum = Number(age)
     if (!Number.isFinite(ageNum) || !Number.isInteger(ageNum) || ageNum < 1 || ageNum > 120)
       return res.status(400).json({ error: 'Age must be a whole number between 1 and 120' })
+  } else if (userId) {
+    try {
+      const profile = await pb.getProfile(userId)
+      if (profile && profile.age != null) ageNum = Number(profile.age)
+    } catch {}
   }
 
   const now = new Date().toISOString()
@@ -112,7 +117,6 @@ router.post('/', async (req, res) => {
     interests: interests || [],
     goal: fullGoal,
     timeframe: timeframe || 'flexible',
-    subGoal: subGoal || '',
     status: 'active',
     materials: materials || [],
     curriculum, thinkingBoard, checklist

@@ -414,16 +414,20 @@ export default function Session() {
 
   if (loading) {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center relative">
+      <PageTransition className="min-h-[100dvh] flex flex-col">
         <AmbientBackground />
-        <div className="relative z-10">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-            className="w-12 h-12 border-[3px] border-[var(--bauhaus-red)] border-t-transparent"
-          />
+        <div className="flex-1 flex flex-col items-center justify-center relative z-10 px-6">
+          <img src="/logo.svg" alt="LearnMosaic" className="w-12 h-12 mb-6" />
+          <div className="w-48 h-1 bg-[var(--surface-alt)] overflow-hidden">
+            <motion.div
+              animate={{ x: ['-100%', '100%'] }}
+              transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+              className="h-full w-1/2 bg-[var(--bauhaus-black)]"
+            />
+          </div>
+          <p className="text-xs text-[var(--ink-muted)] mt-4 uppercase tracking-wider">Loading session...</p>
         </div>
-      </div>
+      </PageTransition>
     )
   }
 
@@ -436,12 +440,9 @@ export default function Session() {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-            className="w-20 h-20 mx-auto mb-8 bg-[var(--bauhaus-red)] flex items-center justify-center"
+            className="w-20 h-20 mx-auto mb-8"
           >
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-              <circle cx="16" cy="16" r="12" stroke="var(--bauhaus-white)" strokeWidth="2"/>
-              <path d="M12 12l8 8M20 12l-8 8" stroke="var(--bauhaus-white)" strokeWidth="2" strokeLinecap="square"/>
-            </svg>
+            <img src="/logo.svg" alt="LearnMosaic" className="w-full h-full" />
           </motion.div>
           <h2 className="type-h2 mb-4">SESSION NOT FOUND</h2>
           <Button onClick={() => navigate('/dashboard')}>BACK TO DASHBOARD</Button>
@@ -488,6 +489,7 @@ export default function Session() {
       {/* Top Navigation Bar */}
       <div className="bg-[var(--bauhaus-black)] text-[var(--bauhaus-white)] px-6 py-3 flex items-center justify-between relative z-20 flex-shrink-0">
         <div className="flex items-center gap-4">
+          <img src="/logo.svg" alt="LearnMosaic" className="w-6 h-6" />
           <motion.button
             whileHover={{ x: -3 }}
             onClick={() => navigate('/dashboard')}

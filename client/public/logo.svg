@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Red rectangle - top left -->
+  <rect x="10" y="10" width="80" height="120" fill="#E63946" stroke="#0D1117" stroke-width="2"/>
+  
+  <!-- Yellow rectangle - bottom left -->
+  <rect x="10" y="130" width="80" height="60" fill="#F4D35E" stroke="#0D1117" stroke-width="2"/>
+  
+  <!-- Yellow rectangle - bottom right -->
+  <rect x="90" y="130" width="100" height="60" fill="#F4D35E" stroke="#0D1117" stroke-width="2"/>
+  
+  <!-- Dark blue circle - top right -->
+  <circle cx="140" cy="80" r="60" fill="#1D3557" stroke="#0D1117" stroke-width="2"/>
+</svg>

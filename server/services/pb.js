@@ -58,9 +58,10 @@ export const pb = {
   },
 
   // Sessions
-  listSessions: async () => {
+  listSessions: async (profileId) => {
     const fields = 'id,name,goal,status,favorite,timeframe,created,interests,profileId,completedAt'
-    const res = await api('GET', `/api/collections/sessions/records?sort=-created&fields=${fields}`)
+    const filter = profileId ? `&filter=(profileId='${profileId}')` : ''
+    const res = await api('GET', `/api/collections/sessions/records?sort=-created&fields=${fields}${filter}`)
     return res?.items || []
   },
 
@@ -114,6 +115,16 @@ export const pb = {
   getMemories: async (sessionId) => {
     const res = await api('GET', `/api/collections/memories/records?filter=(sessionId='${sessionId}')&sort=-created&perPage=200`)
     return res?.items || []
+  },
+
+  getMemoriesByProfile: async function (profileId) {
+    const sessions = await this.listSessionsByProfile(profileId)
+    const allMemories = []
+    for (const s of sessions) {
+      const m = await api('GET', `/api/collections/memories/records?filter=(sessionId='${s.id}')&sort=-created&perPage=200`)
+      if (m?.items) allMemories.push(...m.items)
+    }
+    return allMemories
   },
 
   createMemory: (data) => api('POST', '/api/collections/memories/records', data),

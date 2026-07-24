@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import PageTransition from '../components/layout/PageTransition'
 import Button from '../components/ui/MagneticButton'
 import Modal from '../components/ui/Modal'
@@ -10,38 +10,35 @@ import AmbientBackground from '../components/visuals/AmbientBackground'
 import RevealText, { StaggerReveal, StaggerItem } from '../components/ui/Reveal'
 import SessionMenu from '../components/session/SessionMenu'
 import ProfilePanel from '../components/dashboard/ProfilePanel'
-import ColorPicker from '../components/visuals/ColorPicker'
-import { useTheme } from '../lib/ThemeProvider'
+import { DashboardSkeleton } from '../components/ui/LoadingSkeleton'
 import { api } from '../lib/api'
 
 const cardColors = ['red', 'blue', 'yellow', 'black']
 
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { theme, setTheme } = useTheme()
   const [sessions, setSessions] = useState([])
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
   const [showProfile, setShowProfile] = useState(false)
-  const [showPicker, setShowPicker] = useState(false)
 
-  useEffect(() => {
-    const u = JSON.parse(localStorage.getItem('learnmosaic-user') || 'null')
-    setUser(u)
-    loadSessions()
-  }, [])
-
-  const loadSessions = async () => {
+  const loadSessions = async (profileId) => {
     try {
-      const data = await api.listSessions()
+      const data = await api.listSessions(profileId)
       setSessions(data || [])
     } catch (e) {
       console.warn('Failed to load sessions:', e)
     }
     setLoading(false)
   }
+
+  useEffect(() => {
+    const u = JSON.parse(localStorage.getItem('learnmosaic-user') || 'null')
+    setUser(u)
+    loadSessions(u?.id)
+  }, [])
 
   const confirmDelete = useCallback(async () => {
     if (!deleteTarget) return
@@ -102,13 +99,10 @@ export default function Dashboard() {
         <p>This will permanently delete <strong>"{deleteTarget?.goal}"</strong>. Cannot be undone.</p>
       </Modal>
 
-      <AnimatePresence>
-        {showPicker && <ColorPicker onClose={() => setShowPicker(false)} />}
-      </AnimatePresence>
-
       <div className="max-w-6xl mx-auto px-6 py-16 relative z-10">
         <div className="flex items-end justify-between mb-12 border-b-[4px] border-[var(--bauhaus-black)] pb-6">
           <div className="flex items-end gap-4">
+            <img src="/logo.svg" alt="LearnMosaic" className="w-10 h-10 mb-1" />
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -134,36 +128,6 @@ export default function Dashboard() {
             transition={{ delay: 0.2, duration: 0.4 }}
             className="flex items-center gap-2"
           >
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setTheme({ darkMode: !theme.darkMode })}
-              className={`w-10 h-10 flex items-center justify-center border-[3px] border-[var(--bauhaus-black)] cursor-pointer transition-all duration-200
-                ${theme.darkMode ? 'bg-[var(--bauhaus-black)] text-[var(--bauhaus-yellow)]' : 'bg-[var(--bauhaus-white)] text-[var(--bauhaus-black)]'}`}
-              title={theme.darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
-                {theme.darkMode ? (
-                  <>
-                    <circle cx="12" cy="12" r="5"/>
-                    <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-                  </>
-                ) : (
-                  <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
-                )}
-              </svg>
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowPicker(!showPicker)}
-              className="w-10 h-10 bg-[var(--bauhaus-yellow)] border-[3px] border-[var(--bauhaus-black)] flex items-center justify-center cursor-pointer hover:bg-[var(--bauhaus-red)] transition-all duration-200"
-              title="Design settings"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square">
-                <circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-              </svg>
-            </motion.button>
             <Button onClick={() => navigate('/onboarding')}>
               NEW SESSION +
             </Button>
@@ -171,13 +135,7 @@ export default function Dashboard() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="h-48 bg-[var(--surface)] border-[2px] border-[var(--bauhaus-black)] animate-pulse relative overflow-hidden">
-                <div className="absolute inset-0 animate-shimmer" />
-              </div>
-            ))}
-          </div>
+          <DashboardSkeleton />
         ) : sessions.length === 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 30, filter: 'blur(6px)' }}

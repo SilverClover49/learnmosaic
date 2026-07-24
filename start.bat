@@ -37,7 +37,7 @@ echo ========================================
 echo.
 echo    PocketBase:  http://localhost:8090/_
 echo    Server:      http://localhost:3001
-echo    Client:      http://localhost:5173
+echo    Client:      http://localhost:5174
 echo.
 echo    Close all windows to stop
 echo    or run stop.bat

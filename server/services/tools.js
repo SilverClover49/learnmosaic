@@ -1,6 +1,6 @@
 import { searchWeb, searchImages } from './search.js'
 import { generateImage } from './imagegen.js'
-import { storeMemory, recallMemories } from './memory.js'
+import { storeMemory, recallMemories, recallCrossSessionMemories } from './memory.js'
 import { createArtifact, listArtifacts } from './artifacts.js'
 import { callAI } from './openrouter.js'
 
@@ -238,7 +238,7 @@ export const toolDefinitions = [
   }
 ]
 
-export async function executeToolCall(toolCall, sessionId, settings = {}) {
+export async function executeToolCall(toolCall, sessionId, settings = {}, profileId = null) {
   const { name, arguments: args } = toolCall.function
   let parsed
   try { parsed = JSON.parse(args) } catch {
@@ -288,7 +288,9 @@ export async function executeToolCall(toolCall, sessionId, settings = {}) {
       return { role: 'tool', content: `Stored: ${parsed.key} = ${parsed.value}`, tool_call_id: toolCall.id }
     }
     case 'recall': {
-      const memories = await recallMemories(sessionId, parsed.query)
+      const memories = profileId
+        ? await recallCrossSessionMemories(profileId, parsed.query)
+        : await recallMemories(sessionId, parsed.query)
       const text = memories.length > 0
         ? memories.map(m => `${m.key}: ${m.value}`).join('\n')
         : 'No relevant memories found.'
@@ -354,10 +356,10 @@ export async function executeToolCall(toolCall, sessionId, settings = {}) {
   }
 }
 
-export async function executeToolCalls(toolCalls, sessionId, settings = {}) {
+export async function executeToolCalls(toolCalls, sessionId, settings = {}, profileId = null) {
   const results = []
   for (const tc of toolCalls) {
-    results.push(await executeToolCall(tc, sessionId, settings))
+    results.push(await executeToolCall(tc, sessionId, settings, profileId))
   }
   return results
 }
