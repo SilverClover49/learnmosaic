@@ -33,4 +33,5 @@ export const api = {
   // Settings
   getSettings: () => req('/settings'),
   checkApi: () => req('/settings'),
+  useDefaultApiKey: () => req('/settings/use-default', { method: 'POST' }),
 }
