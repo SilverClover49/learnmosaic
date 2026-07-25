@@ -1,5 +1,3 @@
-import { client, uuid } from './db.js'
-
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY
 
 export default async function handler(req, res) {
@@ -21,10 +19,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Create a refinement session
-    const sessionId = uuid()
-    
-    // Call AI to generate refinement questions
     const systemPrompt = `You are a learning goal refinement assistant. 
 The user wants to learn: ${goal}
 Their interests: ${interests?.join(', ') || 'Not specified'}
@@ -56,10 +50,8 @@ Return ONLY a JSON array of questions, no other text.`
     const aiData = await aiRes.json()
     const content = aiData.choices?.[0]?.message?.content || '[]'
     
-    // Parse questions
     let questions
     try {
-      // Try to extract JSON array from response
       const jsonMatch = content.match(/\[[\s\S]*\]/)
       questions = jsonMatch ? JSON.parse(jsonMatch[0]) : [
         "What's your current skill level?",
@@ -75,7 +67,7 @@ Return ONLY a JSON array of questions, no other text.`
     }
 
     return res.status(200).json({
-      sessionId,
+      sessionId: 'refine-' + Date.now(),
       questions,
       originalGoal: goal
     })

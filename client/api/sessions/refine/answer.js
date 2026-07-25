@@ -1,5 +1,3 @@
-import { client, uuid } from '../db.js'
-
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY
 
 export default async function handler(req, res) {
@@ -21,12 +19,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Build context from all answers
     const context = allAnswers 
       ? allAnswers.map((a, i) => `Question ${i+1}: ${a.question}\nAnswer: ${a.answer}`).join('\n')
       : answer
 
-    // Call AI to refine the goal
     const systemPrompt = `You are a learning goal refinement assistant.
 Original goal: ${originalGoal || 'Unknown'}
 User context: ${context}
