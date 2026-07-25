@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       provider: 'openrouter',
       model: 'meta-llama/llama-3.3-70b-instruct',
-      apiKey: process.env.OPENROUTER_API_KEY || '',
+      apiKey: process.env.OPENROUTER_API_KEY ? '••••••••' : '',
       hasApiKey: !!process.env.OPENROUTER_API_KEY,
       hasDefaultKey: true,
       defaultKeyMasked: 'sk-or-v1••••••••'
