@@ -19,18 +19,18 @@ export default async function handler(req, res) {
   }
 
   try {
-    const systemPrompt = `You are a learning goal refinement assistant. 
+    const systemPrompt = `You are a learning goal refinement assistant.
 The user wants to learn: ${goal}
 Their interests: ${interests?.join(', ') || 'Not specified'}
 
-Generate 3-5 follow-up questions to refine this learning goal.
-Questions should help understand:
-1. Specific skill level (beginner/intermediate/advanced)
-2. Learning style preference (video/text/practice)
-3. Time commitment
-4. Specific outcomes they want
+Generate a follow-up question with 3-4 multiple choice options to refine this learning goal.
+The question should help understand their skill level.
 
-Return ONLY a JSON array of questions, no other text.`
+Return ONLY a JSON object with:
+{
+  "question": "the question text",
+  "options": ["option1", "option2", "option3"]
+}`
     
     const aiRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -48,28 +48,28 @@ Return ONLY a JSON array of questions, no other text.`
     })
 
     const aiData = await aiRes.json()
-    const content = aiData.choices?.[0]?.message?.content || '[]'
+    const content = aiData.choices?.[0]?.message?.content || '{}'
     
-    let questions
+    let result
     try {
-      const jsonMatch = content.match(/\[[\s\S]*\]/)
-      questions = jsonMatch ? JSON.parse(jsonMatch[0]) : [
-        "What's your current skill level?",
-        "How do you prefer to learn?",
-        "How much time can you dedicate?"
-      ]
+      const jsonMatch = content.match(/\{[\s\S]*\}/)
+      result = jsonMatch ? JSON.parse(jsonMatch[0]) : {
+        question: "What's your current skill level?",
+        options: ["Beginner", "Intermediate", "Advanced"]
+      }
     } catch {
-      questions = [
-        "What's your current skill level?",
-        "How do you prefer to learn?",
-        "How much time can you dedicate?"
-      ]
+      result = {
+        question: "What's your current skill level?",
+        options: ["Beginner", "Intermediate", "Advanced"]
+      }
     }
 
     return res.status(200).json({
       sessionId: 'refine-' + Date.now(),
-      questions,
-      originalGoal: goal
+      question: result.question,
+      options: result.options,
+      step: 1,
+      totalSteps: 3
     })
   } catch (e) {
     console.error(e)
