@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>LearnMosaic - Bauhaus Lean Canvas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        @page { size: 1920px 1080px; margin: 0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Jost', sans-serif;
+            background: var(--white);
+            color: var(--black);
+            width: 1920px;
+            height: 1080px;
+            padding: 60px;
+        }
+        
+        :root {
+            --red: #E63946;
+            --blue: #1D3557;
+            --yellow: #F4D35E;
+            --black: #000000;
+            --white: #FFFFFF;
+            --gray: #F5F5F3;
+        }
+        
+        .canvas-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 4px solid var(--black);
+        }
+        
+        .canvas-title {
+            font-size: 48px;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+        }
+        
+        .canvas-title .highlight {
+            color: var(--red);
+        }
+        
+        .canvas-subtitle {
+            font-size: 12px;
+            color: #666;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+        
+        .canvas-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 20px;
+            height: calc(100% - 100px);
+        }
+        
+        .canvas-cell {
+            background: var(--gray);
+            border: 3px solid var(--black);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .cell-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--red);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--black);
+        }
+        
+        .cell-content {
+            flex: 1;
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--black);
+        }
+        
+        .cell-content h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+        
+        .cell-content ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .cell-content li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .cell-content li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--red);
+            font-weight: 700;
+        }
+        
+        .cell-wide {
+            grid-column: span 2;
+        }
+    </style>
+</head>
+<body>
+    <div class="canvas-header">
+        <div>
+            <h1 class="canvas-title">LEARN<span class="highlight">MOSAIC</span></h1>
+            <p class="canvas-subtitle">Lean Canvas — Business Model</p>
+        </div>
+        <div style="text-align: right;">
+            <p style="font-size: 12px; color: #666;">SDG 4: Quality Education</p>
+            <p style="font-size: 12px; color: #666;">July 2026</p>
+        </div>
+    </div>
+    
+    <div class="canvas-grid">
+        <div class="canvas-cell">
+            <div class="cell-label">Problem</div>
+            <div class="cell-content">
+                <ul>
+                    <li>Learning overwhelm</li>
+                    <li>Generic education</li>
+                    <li>No progress visibility</li>
+                    <li>Lack of motivation</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="canvas-cell">
+            <div class="cell-label">Solution</div>
+            <div class="cell-content">
+                <ul>
+                    <li>AI-powered curricula</li>
+                    <li>Conversational tutoring</li>
+                    <li>Visual artifacts</li>
+                    <li>Progress tracking</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="canvas-cell">
+            <div class="cell-label">Unique Value Proposition</div>
+            <div class="cell-content">
+                <h3>"You learn → What you wanna learn → How you wanna learn"</h3>
+            </div>
+        </div>
+        
+        <div class="canvas-cell">
+            <div class="cell-label">Customer Segments</div>
+            <div class="cell-content">
+                <ul>
+                    <li>Students (10-35+)</li>
+                    <li>Self-learners</li>
+                    <li>Career changers</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="canvas-cell">
+            <div class="cell-label">Channels</div>
+            <div class="cell-content">
+                <ul>
+                    <li>Direct web access</li>
+                    <li>Word of mouth</li>
+                    <li>Educational partners</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="canvas-cell">
+            <div class="cell-label">Revenue Streams</div>
+            <div class="cell-content">
+                <ul>
+                    <li>Freemium model</li>
+                    <li>Subscriptions</li>
+                    <li>Enterprise licenses</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="canvas-cell">
+            <div class="cell-label">Cost Structure</div>
+            <div class="cell-content">
+                <ul>
+                    <li>AI model costs</li>
+                    <li>Cloud infrastructure</li>
+                    <li>Development</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="canvas-cell">
+            <div class="cell-label">Key Metrics</div>
+            <div class="cell-content">
+                <ul>
+                    <li>Daily active users</li>
+                    <li>Session duration</li>
+                    <li>Completion rate</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="canvas-cell cell-wide">
+            <div class="cell-label">Unfair Advantage</div>
+            <div class="cell-content">
+                <h3>Proprietary AI + Visual Artifacts + Gamification</h3>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
