@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>LearnMosaic - Presentation Slides</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        @page { size: 1920px 1080px; margin: 0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg: #050505;
+            --surface: #0a0a0a;
+            --accent-green: #00d4aa;
+            --accent-purple: #a855f7;
+            --accent-blue: #3b82f6;
+            --text: #fafafa;
+            --text-dim: #737373;
+        }
+        
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+        
+        .slide {
+            width: 1920px;
+            height: 1080px;
+            position: relative;
+            overflow: hidden;
+            page-break-after: always;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 120px;
+        }
+        
+        /* Slide 1: Title */
+        .slide-1 {
+            background: var(--bg);
+        }
+        
+        .slide-1::before {
+            content: '';
+            position: absolute;
+            top: -200px;
+            right: -200px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(0,212,170,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        
+        .slide-1::after {
+            content: '';
+            position: absolute;
+            bottom: -150px;
+            left: -150px;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(168,85,247,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(0,212,170,0.1);
+            border: 1px solid rgba(0,212,170,0.2);
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--accent-green);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 40px;
+        }
+        
+        h1 {
+            font-size: 96px;
+            font-weight: 700;
+            line-height: 1.05;
+            letter-spacing: -0.03em;
+            margin-bottom: 24px;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-purple), var(--accent-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            font-size: 24px;
+            color: var(--text-dim);
+            max-width: 600px;
+            line-height: 1.6;
+        }
+        
+        .logo-mark {
+            position: absolute;
+            bottom: 120px;
+            left: 120px;
+            width: 60px;
+            height: 60px;
+        }
+        
+        /* Slide 2: Problem */
+        .slide-2 {
+            background: var(--bg);
+        }
+        
+        .section-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--accent-green);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 24px;
+        }
+        
+        .problem-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 32px;
+            margin-top: 60px;
+        }
+        
+        .problem-card {
+            padding: 32px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+        }
+        
+        .problem-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        
+        .problem-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        
+        .problem-desc {
+            font-size: 14px;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+        
+        /* Slide 3: Solution */
+        .solution-content {
+            display: flex;
+            gap: 80px;
+            align-items: center;
+        }
+        
+        .solution-text {
+            flex: 1;
+        }
+        
+        .solution-visual {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .feature-list {
+            margin-top: 40px;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(0,212,170,0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        
+        .feature-text h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .feature-text p {
+            font-size: 14px;
+            color: var(--text-dim);
+        }
+        
+        /* Slide 4: Features */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            margin-top: 40px;
+        }
+        
+        .feature-card {
+            padding: 32px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+        }
+        
+        .feature-card h3 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .feature-card p {
+            font-size: 15px;
+            color: var(--text-dim);
+            line-height: 1.6;
+        }
+        
+        /* Slide 5: SDG */
+        .sdg-badge {
+            width: 200px;
+            height: 200px;
+            background: #E5243B;
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .sdg-number {
+            font-size: 72px;
+            font-weight: 700;
+        }
+        
+        .sdg-text {
+            font-size: 14px;
+            text-align: center;
+            padding: 0 20px;
+        }
+        
+        /* Slide 6: Tech */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-top: 40px;
+        }
+        
+        .tech-card {
+            padding: 32px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 16px;
+            text-align: center;
+        }
+        
+        .tech-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+        
+        .tech-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .tech-desc {
+            font-size: 13px;
+            color: var(--text-dim);
+        }
+        
+        /* Slide 7: Thank You */
+        .slide-thankyou {
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .thankyou-heading {
+            font-size: 96px;
+            font-weight: 700;
+            margin-bottom: 24px;
+        }
+        
+        .thankyou-sub {
+            font-size: 24px;
+            color: var(--text-dim);
+            margin-bottom: 60px;
+        }
+        
+        .thankyou-link {
+            font-size: 18px;
+            color: var(--accent-green);
+        }
+    </style>
+</head>
+<body>
+
+<!-- Slide 1: Title -->
+<section class="slide slide-1">
+    <div class="badge">✦ AI-Powered Learning</div>
+    <h1>Learn<br><span class="gradient-text">Mosaic</span></h1>
+    <p class="subtitle">Your personalized AI learning companion that builds curriculums around you, tracks your progress, and celebrates your achievements.</p>
+    <svg class="logo-mark" viewBox="0 0 60 60" fill="none">
+        <rect x="0" y="0" width="28" height="40" fill="#E63946"/>
+        <rect x="0" y="40" width="28" height="20" fill="#F4D35E"/>
+        <rect x="28" y="40" width="32" height="20" fill="#F4D35E"/>
+        <circle cx="44" cy="30" r="20" fill="#1D3557"/>
+    </svg>
+</section>
+
+<!-- Slide 2: Problem -->
+<section class="slide slide-2">
+    <p class="section-label">The Problem</p>
+    <h1 style="font-size: 64px; font-weight: 700; letter-spacing: -0.03em;">Learning is broken for most students</h1>
+    <div class="problem-grid">
+        <div class="problem-card">
+            <div class="problem-icon">📚</div>
+            <h3 class="problem-title">Overwhelm</h3>
+            <p class="problem-desc">Too many resources, no clear path. Students don't know where to start.</p>
+        </div>
+        <div class="problem-card">
+            <div class="problem-icon">🎯</div>
+            <h3 class="problem-title">Generic</h3>
+            <p class="problem-desc">One-size-fits-all education ignores individual learning styles and pace.</p>
+        </div>
+        <div class="problem-card">
+            <div class="problem-icon">📊</div>
+            <h3 class="problem-title">Invisible</h3>
+            <p class="problem-desc">No progress tracking. Students can't see how far they've come.</p>
+        </div>
+        <div class="problem-card">
+            <div class="problem-icon">😔</div>
+            <h3 class="problem-title">Unmotivating</h3>
+            <p class="problem-desc">No milestones, no celebrations, no sense of achievement.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Slide 3: Solution -->
+<section class="slide slide-2">
+    <div class="solution-content">
+        <div class="solution-text">
+            <p class="section-label">Our Solution</p>
+            <h1 style="font-size: 56px; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 24px;">LearnMosaic</h1>
+            <p style="font-size: 20px; color: var(--text-dim); margin-bottom: 40px;">Your AI learning companion that builds curriculums around YOU.</p>
+            <div class="feature-list">
+                <div class="feature-item">
+                    <div class="feature-icon">🤖</div>
+                    <div class="feature-text">
+                        <h4>AI-Powered Curriculum</h4>
+                        <p>Automatically generates personalized learning paths based on your goals.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🎨</div>
+                    <div class="feature-text">
+                        <h4>Visual Artifacts</h4>
+                        <p>Diagrams, code examples, whiteboards generated in real-time.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">✅</div>
+                    <div class="feature-text">
+                        <h4>Progress Tracking</h4>
+                        <p>Dynamic checklists that update as you learn.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🎉</div>
+                    <div class="feature-text">
+                        <h4>Achievement Celebration</h4>
+                        <p>End-credits ceremony when you complete your goal.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Slide 4: Features -->
+<section class="slide slide-2">
+    <p class="section-label">Key Features</p>
+    <h1 style="font-size: 56px; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 16px;">What makes us special</h1>
+    <p style="font-size: 18px; color: var(--text-dim);">You learn → What you wanna learn → How you wanna learn</p>
+    <div class="features-grid">
+        <div class="feature-card">
+            <h3>🤖 AI Tutor</h3>
+            <p>Conversational learning that adapts to your style and pace. Ask questions, get explanations, learn at your own speed.</p>
+        </div>
+        <div class="feature-card">
+            <h3>🎨 Visual Artifacts</h3>
+            <p>Diagrams, code examples, and whiteboards generated in real-time to help you understand complex concepts.</p>
+        </div>
+        <div class="feature-card">
+            <h3>✅ Progress Tracking</h3>
+            <p>Dynamic checklists that update as you complete milestones. See your growth over time.</p>
+        </div>
+        <div class="feature-card">
+            <h3>🎉 Achievement System</h3>
+            <p>End-credits celebration when you reach your goal. Every milestone matters.</p>
+        </div>
+    </div>
+</section>
+
+<!-- Slide 5: SDG -->
+<section class="slide slide-2">
+    <div style="display: flex; gap: 80px; align-items: center;">
+        <div>
+            <div class="sdg-badge">
+                <div class="sdg-number">4</div>
+                <div class="sdg-text">QUALITY EDUCATION</div>
+            </div>
+        </div>
+        <div>
+            <p class="section-label">United Nations SDG</p>
+            <h1 style="font-size: 56px; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 24px;">Aligned with Global Goals</h1>
+            <p style="font-size: 18px; color: var(--text-dim); line-height: 1.8; max-width: 600px;">
+                LearnMosaic directly contributes to SDG 4 by providing personalized, AI-powered learning experiences that adapt to individual students. Our platform makes quality education accessible, engaging, and effective for learners of all ages.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Slide 6: Tech -->
+<section class="slide slide-2">
+    <p class="section-label">Technology</p>
+    <h1 style="font-size: 56px; font-weight: 700; letter-spacing: -0.03em;">Built with modern tools</h1>
+    <div class="tech-grid">
+        <div class="tech-card">
+            <div class="tech-icon">⚛️</div>
+            <div class="tech-name">React + Vite</div>
+            <div class="tech-desc">Fast, modern frontend</div>
+        </div>
+        <div class="tech-card">
+            <div class="tech-icon">🎨</div>
+            <div class="tech-name">Tailwind CSS</div>
+            <div class="tech-desc">Utility-first styling</div>
+        </div>
+        <div class="tech-card">
+            <div class="tech-icon">🤖</div>
+            <div class="tech-name">OpenRouter AI</div>
+            <div class="tech-desc">Llama 3.3 70B</div>
+        </div>
+        <div class="tech-card">
+            <div class="tech-icon">⚡</div>
+            <div class="tech-name">Node.js</div>
+            <div class="tech-desc">Express backend</div>
+        </div>
+        <div class="tech-card">
+            <div class="tech-icon">💾</div>
+            <div class="tech-name">Turso</div>
+            <div class="tech-desc">SQLite cloud database</div>
+        </div>
+        <div class="tech-card">
+            <div class="tech-icon">🚀</div>
+            <div class="tech-name">Vercel</div>
+            <div class="tech-desc">Edge deployment</div>
+        </div>
+    </div>
+</section>
+
+<!-- Slide 7: Thank You -->
+<section class="slide slide-thankyou">
+    <h2 class="thankyou-heading">Thank You</h2>
+    <p class="thankyou-sub">Questions?</p>
+    <p class="thankyou-link">github.com/SilverClover49/learnmosaic</p>
+    <p style="margin-top: 40px; color: var(--text-dim); font-size: 14px;">Built for SDG 4: Quality Education</p>
+</section>
+
+</body>
+</html>
