@@ -11,6 +11,7 @@ import RevealText, { StaggerReveal, StaggerItem } from '../components/ui/Reveal'
 import SessionMenu from '../components/session/SessionMenu'
 import ProfilePanel from '../components/dashboard/ProfilePanel'
 import { DashboardSkeleton } from '../components/ui/LoadingSkeleton'
+import DarkModeToggle from '../components/ui/DarkModeToggle'
 import { api } from '../lib/api'
 
 const cardColors = ['red', 'blue', 'yellow', 'black']
@@ -128,6 +129,7 @@ export default function Dashboard() {
             transition={{ delay: 0.2, duration: 0.4 }}
             className="flex items-center gap-2"
           >
+            <DarkModeToggle />
             <Button onClick={() => navigate('/onboarding')}>
               NEW SESSION +
             </Button>

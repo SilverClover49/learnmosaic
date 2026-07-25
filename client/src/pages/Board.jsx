@@ -31,8 +31,8 @@ export default function Board_() {
           </div>
         ) : (
           <div className="p-[2px] rounded-[var(--radius-xl)]" style={{ background: 'var(--glass-border)' }}>
-            <div className="rounded-[calc(var(--radius-xl)-2px)] p-6 font-mono text-sm leading-relaxed whitespace-pre-wrap"
-              style={{ backgroundColor: 'var(--surface)', boxShadow: 'var(--shadow-inner)' }}>
+            <div className="rounded-[calc(var(--radius-xl)-2px)] p-6 prose prose-sm max-w-none whitespace-pre-wrap break-words"
+              style={{ backgroundColor: 'var(--surface)', boxShadow: 'var(--shadow-inner)', color: 'var(--ink)' }}>
               {content || 'No board entries yet.'}
             </div>
           </div>

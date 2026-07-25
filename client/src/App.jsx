@@ -13,6 +13,7 @@ import Settings from './pages/Settings'
 import ToastContainer from './components/ui/Toast'
 import CursorFollower from './components/visuals/CursorFollower'
 import AmbientBackground from './components/visuals/AmbientBackground'
+import ErrorBoundary from './components/ui/ErrorBoundary'
 import { useTheme } from './lib/ThemeProvider'
 
 const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.includes('Firefox')
@@ -27,7 +28,7 @@ export default function App() {
   const { theme } = useTheme()
 
   return (
-    <>
+    <ErrorBoundary>
       {!isFirefox && <CursorFollower />}
       <AmbientBackground />
       <div className="glow-overlay" />
@@ -46,6 +47,6 @@ export default function App() {
           <Route path="/session/:id/credits" element={<Credits />} />
         </Routes>
       </AnimatePresence>
-    </>
+    </ErrorBoundary>
   )
 }

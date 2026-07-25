@@ -8,6 +8,7 @@ import { getSettings } from '../services/settings.js'
 import { pb } from '../services/pb.js'
 import { handleChat } from '../services/chat.js'
 import { loadPrompt } from '../services/prompts.js'
+import { startRefinement, answerRefinement } from '../services/refine.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const UPLOAD_DIR = path.join(__dirname, '..', '..', 'uploads')
@@ -255,6 +256,31 @@ router.post('/:id/undo-complete', async (req, res) => {
     await pb.updateSession(req.params.id, { status: 'active', completedAt: null })
     await pb.addMilestone({ sessionId: req.params.id, type: 'session_undo', description: 'Undid session completion' })
     res.json({ success: true })
+  } catch (e) {
+    res.status(500).json({ error: e.message })
+  }
+})
+
+// Multi-turn goal refinement
+router.post('/refine/start', async (req, res) => {
+  const { goal, interests } = req.body
+  if (!goal) return res.status(400).json({ error: 'Goal is required' })
+  try {
+    const result = await startRefinement(goal, interests)
+    if (result.error) return res.status(400).json(result)
+    res.json(result)
+  } catch (e) {
+    res.status(500).json({ error: e.message })
+  }
+})
+
+router.post('/refine/answer', async (req, res) => {
+  const { sessionId, answer } = req.body
+  if (!sessionId || !answer) return res.status(400).json({ error: 'sessionId and answer required' })
+  try {
+    const result = await answerRefinement(sessionId, answer)
+    if (result.error) return res.status(400).json(result)
+    res.json(result)
   } catch (e) {
     res.status(500).json({ error: e.message })
   }

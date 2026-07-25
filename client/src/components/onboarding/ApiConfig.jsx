@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { api } from '../../lib/api'
 
 const PROVIDERS = [
   { id: 'openrouter', name: 'OpenRouter', desc: 'Access GPT-4o, Claude, Llama and 300+ models', icon: '◆' },
@@ -24,6 +25,14 @@ export default function ApiConfig({ onComplete }) {
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [defaultKeyInfo, setDefaultKeyInfo] = useState(null)
+  const [usingDefault, setUsingDefault] = useState(false)
+
+  useEffect(() => {
+    api.checkApi().then(data => {
+      if (data.hasDefaultKey) setDefaultKeyInfo(data)
+    }).catch(() => {})
+  }, [])
 
   useEffect(() => {
     const models = MODELS[provider] || MODELS.openrouter
@@ -72,6 +81,16 @@ export default function ApiConfig({ onComplete }) {
     onComplete(null)
   }
 
+  const handleUseDefault = async () => {
+    setUsingDefault(true)
+    try {
+      await api.useDefaultApiKey()
+      onComplete({ aiProvider: 'opencode', aiModel: 'mimo-v2.5-free', apiKey: '__default__', baseUrl: '', global: true })
+    } catch (e) {
+      setUsingDefault(false)
+    }
+  }
+
   return (
     <div className="text-center max-w-lg mx-auto">
       <motion.div
@@ -90,6 +109,28 @@ export default function ApiConfig({ onComplete }) {
       <p className="text-sm text-[var(--ink-muted)] mb-8">
         LearnMosaic needs an AI provider to generate lessons, answer questions, and create content.
       </p>
+
+      {/* Default Key Quick-Use */}
+      {defaultKeyInfo && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 p-4 border-2 border-[var(--bauhaus-blue)] bg-[var(--bauhaus-blue)]/5"
+        >
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleUseDefault}
+            disabled={usingDefault}
+            className="w-full px-5 py-3 text-xs font-bold uppercase tracking-wider bg-[var(--bauhaus-blue)] text-white cursor-pointer hover:brightness-110 transition-all disabled:opacity-50"
+          >
+            {usingDefault ? 'ACTIVATING...' : 'USE DEFAULT AI →'}
+          </motion.button>
+          <div className="text-[10px] text-[var(--ink-muted)] mt-2 text-center">
+            Or configure your own provider below
+          </div>
+        </motion.div>
+      )}
 
       {/* Provider Selection */}
       <div className="text-left mb-6">
@@ -228,9 +269,9 @@ export default function ApiConfig({ onComplete }) {
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         onClick={handleSkip}
-        className="mt-4 text-xs text-[var(--ink-muted)] underline hover:text-[var(--ink)] transition-colors cursor-pointer"
+        className="mt-4 px-4 py-2 text-xs font-medium uppercase tracking-wider text-[var(--ink-muted)] border-[2px] border-dashed border-[var(--ink-dim)] hover:border-[var(--bauhaus-red)] hover:text-[var(--bauhaus-red)] transition-colors cursor-pointer"
       >
-        Skip for now — I'll configure later
+        I'LL CONFIGURE LATER
       </motion.button>
     </div>
   )

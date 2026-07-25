@@ -1,4 +1,8 @@
 const PROVIDERS = {
+  opencode: {
+    baseUrl: 'https://opencode.ai/zen/v1/chat/completions',
+    headers: (key) => ({ 'Authorization': `Bearer ${key}` })
+  },
   openrouter: {
     baseUrl: 'https://openrouter.ai/api/v1/chat/completions',
     headers: (key) => ({
@@ -18,10 +22,10 @@ const PROVIDERS = {
 }
 
 function resolveSettings(settings) {
-  const provider = settings?.aiProvider || process.env.AI_PROVIDER || 'openrouter'
+  const provider = settings?.aiProvider || process.env.AI_PROVIDER || 'opencode'
   const apiKey = settings?.apiKey || process.env.OPENROUTER_API_KEY || ''
-  const model = settings?.aiModel || process.env.AI_MODEL || 'openai/gpt-4o-mini'
-  const baseUrl = settings?.baseUrl || ''
+  const model = settings?.aiModel || process.env.OPENCODE_MODEL || process.env.AI_MODEL || 'mimo-v2.5-free'
+  const baseUrl = settings?.baseUrl || process.env.OPENCODE_BASE_URL || ''
 
   if (provider === 'custom' && baseUrl) {
     return { url: baseUrl, headers: { 'Authorization': apiKey ? `Bearer ${apiKey}` : '', 'Content-Type': 'application/json' }, model }

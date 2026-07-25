@@ -7,6 +7,7 @@ import Input from '../components/ui/Input'
 import ProgressBar from '../components/ui/ProgressBar'
 import AmbientBackground from '../components/visuals/AmbientBackground'
 import ApiConfig from '../components/onboarding/ApiConfig'
+import RefineWizard from '../components/onboarding/RefineWizard'
 import { api } from '../lib/api'
 import { useTheme } from '../lib/ThemeProvider'
 
@@ -125,6 +126,7 @@ export default function Onboarding() {
   const handleApiConfigComplete = (config) => {
     setApiConfigDone(true)
     setShowApiConfig(false)
+    setStep(s => s + 1)
   }
 
   const stepOffset = existingUser ? 1 : 0
@@ -133,15 +135,15 @@ export default function Onboarding() {
 
   const stepLabels = hasApiStep
     ? (existingUser
-        ? ['API', 'Interests', 'Goal', 'Refine', 'Timeframe', 'Review']
-        : ['API', 'You', 'Interests', 'Goal', 'Refine', 'Timeframe', 'Review'])
+        ? ['API', 'Learn', 'Refine', 'Timeframe', 'Review']
+        : ['API', 'You', 'Learn', 'Refine', 'Timeframe', 'Review'])
     : (existingUser
-        ? ['Interests', 'Goal', 'Refine', 'Timeframe', 'Review']
-        : ['You', 'Interests', 'Goal', 'Refine', 'Timeframe', 'Review'])
+        ? ['Learn', 'Refine', 'Timeframe', 'Review']
+        : ['You', 'Learn', 'Refine', 'Timeframe', 'Review'])
 
   const stepIconsList = hasApiStep
-    ? (existingUser ? stepIcons.slice(0, 6) : stepIcons.slice(0, 7))
-    : (existingUser ? stepIcons.slice(1) : stepIcons.slice(1))
+    ? (existingUser ? stepIcons.slice(0, 5) : stepIcons.slice(0, 6))
+    : (existingUser ? stepIcons.slice(1, 5) : stepIcons.slice(1, 6))
 
   const getDisplayStep = () => existingUser ? step : step
 
@@ -163,21 +165,19 @@ export default function Onboarding() {
     const s = hasApiStep ? step - 1 : step
     if (existingUser) {
       switch (s) {
-        case 0: return profile.interests.length > 0 || profile.customInterest.trim()
-        case 1: return profile.goal || profile.customGoal.trim()
-        case 2: return profile.subGoal.trim().length >= 3
-        case 3: return profile.timeframe || profile.customTimeframe.trim()
-        case 4: return true
+        case 0: return (profile.interests.length > 0 || profile.customInterest.trim()) && (profile.goal || profile.customGoal.trim())
+        case 1: return profile.subGoal.trim().length >= 3
+        case 2: return profile.timeframe || profile.customTimeframe.trim()
+        case 3: return true
         default: return true
       }
     }
     switch (s) {
       case 0: return profile.name.trim() && profile.age.trim()
-      case 1: return profile.interests.length > 0 || profile.customInterest.trim()
-      case 2: return profile.goal || profile.customGoal.trim()
-      case 3: return profile.subGoal.trim().length >= 3
-      case 4: return profile.timeframe || profile.customTimeframe.trim()
-      case 5: return true
+      case 1: return (profile.interests.length > 0 || profile.customInterest.trim()) && (profile.goal || profile.customGoal.trim())
+      case 2: return profile.subGoal.trim().length >= 3
+      case 3: return profile.timeframe || profile.customTimeframe.trim()
+      case 4: return true
       default: return true
     }
   }
@@ -439,7 +439,7 @@ export default function Onboarding() {
                   </div>
                 )}
 
-                {/* Step: Interests */}
+                {/* Step: Interests + Goal (merged) */}
                 {(existingUser ? contentStep === 0 : contentStep === 1) && (
                   <div className="text-center">
                     <motion.div
@@ -454,7 +454,7 @@ export default function Onboarding() {
                       </svg>
                     </motion.div>
                     <h2 className="type-h2 mb-3">WHAT INTERESTS YOU?</h2>
-                    <p className="text-[var(--ink-muted)] mb-8">Pick a few things you're curious about.</p>
+                    <p className="text-[var(--ink-muted)] mb-6">Pick a few things you're curious about.</p>
                     <div className="flex flex-wrap gap-2 justify-center mb-5">
                       {interests.map((item, idx) => (
                         <motion.button
@@ -475,231 +475,76 @@ export default function Onboarding() {
                       ))}
                     </div>
                     <Input placeholder="Or type your own interest..." value={profile.customInterest} onChange={e => update('customInterest', e.target.value)} />
-                  </div>
-                )}
 
-                {/* Step: Goal (with resource upload toggle) */}
-                {(existingUser ? contentStep === 1 : contentStep === 2) && (
-                  <div className="text-center">
-                    <motion.div
-                      initial={{ scale: 0, rotate: -45 }}
-                      animate={{ scale: 1, rotate: 0 }}
-                      transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
-                      className="w-20 h-20 mx-auto mb-8 bg-[var(--bauhaus-red)] flex items-center justify-center"
-                    >
-                      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                        <rect x="6" y="6" width="20" height="20" stroke="var(--bauhaus-white)" strokeWidth="2"/>
-                        <path d="M12 16l3 3 5-6" stroke="var(--bauhaus-white)" strokeWidth="2" strokeLinecap="square"/>
-                      </svg>
-                    </motion.div>
-                    <h2 className="type-h2 mb-3">WHAT'S YOUR GOAL?</h2>
-                    <p className="text-[var(--ink-muted)] mb-6">What do you want to achieve?</p>
-                    <div className="space-y-3 mb-6">
-                      {goals.map((item, idx) => (
+                    <div className="border-t-[2px] border-[var(--border-color)] mt-8 pt-8">
+                      <h2 className="type-h2 mb-3">WHAT'S YOUR GOAL?</h2>
+                      <p className="text-[var(--ink-muted)] mb-6">What do you want to achieve?</p>
+                      <div className="space-y-3">
+                        {goals.map((item, idx) => (
+                          <motion.button
+                            key={item}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: idx * 0.06, duration: 0.3 }}
+                            onClick={() => update('goal', item)}
+                            whileHover={{ x: 4 }}
+                            whileTap={{ scale: 0.98 }}
+                            className={`w-full text-left px-5 py-4 transition-all duration-200 cursor-pointer uppercase tracking-wider font-medium border-[2px] border-[var(--bauhaus-black)]
+                              ${profile.goal === item
+                                ? 'bg-[var(--bauhaus-black)] text-[var(--bauhaus-white)]'
+                                : 'text-[var(--ink)] hover:bg-[var(--surface-alt)]'}`}
+                          >
+                            {item}
+                          </motion.button>
+                        ))}
                         <motion.button
-                          key={item}
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: idx * 0.06, duration: 0.3 }}
-                          onClick={() => update('goal', item)}
+                          transition={{ delay: goals.length * 0.06, duration: 0.3 }}
+                          onClick={() => update('goal', 'custom')}
                           whileHover={{ x: 4 }}
                           whileTap={{ scale: 0.98 }}
                           className={`w-full text-left px-5 py-4 transition-all duration-200 cursor-pointer uppercase tracking-wider font-medium border-[2px] border-[var(--bauhaus-black)]
-                            ${profile.goal === item
+                            ${profile.goal === 'custom'
                               ? 'bg-[var(--bauhaus-black)] text-[var(--bauhaus-white)]'
                               : 'text-[var(--ink)] hover:bg-[var(--surface-alt)]'}`}
                         >
-                          {item}
+                          SOMETHING ELSE...
                         </motion.button>
-                      ))}
-                      <motion.button
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: goals.length * 0.06, duration: 0.3 }}
-                        onClick={() => update('goal', 'custom')}
-                        whileHover={{ x: 4 }}
-                        whileTap={{ scale: 0.98 }}
-                        className={`w-full text-left px-5 py-4 transition-all duration-200 cursor-pointer uppercase tracking-wider font-medium border-[2px] border-[var(--bauhaus-black)]
-                          ${profile.goal === 'custom'
-                            ? 'bg-[var(--bauhaus-black)] text-[var(--bauhaus-white)]'
-                            : 'text-[var(--ink)] hover:bg-[var(--surface-alt)]'}`}
-                      >
-                        SOMETHING ELSE...
-                      </motion.button>
-                      <AnimatePresence>
-                        {profile.goal === 'custom' && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.3 }}
-                          >
-                            <Input placeholder="Describe your goal..." value={profile.customGoal} onChange={e => update('customGoal', e.target.value)} autoFocus />
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-
-                    {/* Material upload toggle */}
-                    <div className="border-t-[2px] border-[var(--border-color)] pt-5">
-                      <motion.button
-                        onClick={() => setShowMaterials(!showMaterials)}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        className="flex items-center gap-3 mx-auto px-5 py-3 text-sm font-medium uppercase tracking-wider transition-all duration-200 cursor-pointer border-[2px] border-[var(--bauhaus-black)]
-                          bg-[var(--bauhaus-white)] hover:bg-[var(--surface-alt)]"
-                      >
-                        <motion.div
-                          animate={{ rotate: showMaterials ? 45 : 0 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                            <path d="M7 1v12M1 7h12" stroke="var(--bauhaus-black)" strokeWidth="2" strokeLinecap="square"/>
-                          </svg>
-                        </motion.div>
-                        ADD YOUR OWN MATERIALS
-                      </motion.button>
-
-                      <AnimatePresence>
-                        {showMaterials && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0, y: -10 }}
-                            animate={{ height: 'auto', opacity: 1, y: 0 }}
-                            exit={{ height: 0, opacity: 0, y: -10 }}
-                            transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
-                            className="overflow-hidden mt-4"
-                          >
-                            <div
-                              className="border-[3px] border-dashed border-[var(--bauhaus-black)] p-6 rounded-[var(--radius-lg)] cursor-pointer hover:bg-[var(--surface-alt)] transition-all duration-300"
-                              style={{ background: 'var(--surface)' }}
-                              onClick={() => fileInputRef.current?.click()}
-                              onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = 'var(--bauhaus-red)' }}
-                              onDragLeave={(e) => { e.currentTarget.style.borderColor = 'var(--bauhaus-black)' }}
-                              onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = 'var(--bauhaus-black)'; handleFileSelect(e) }}
+                        <AnimatePresence>
+                          {profile.goal === 'custom' && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: 'auto', opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              transition={{ duration: 0.3 }}
                             >
-                              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--bauhaus-black)" strokeWidth="1.5" className="mx-auto mb-3">
-                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
-                              </svg>
-                              <p className="text-sm font-medium mb-1">Drop your learning materials here</p>
-                              <p className="text-xs text-[var(--ink-muted)]">PDF, DOC, TXT, images, markdown</p>
-                              <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileSelect} accept=".pdf,.doc,.docx,.txt,.md,.png,.jpg,.jpeg,.mp4,.mov" />
-                            </div>
-
-                            <AnimatePresence>
-                              {materials.map((file, idx) => (
-                                <motion.div
-                                  key={`${file.name}-${idx}`}
-                                  initial={{ opacity: 0, x: -20, scale: 0.9 }}
-                                  animate={{ opacity: 1, x: 0, scale: 1 }}
-                                  exit={{ opacity: 0, x: 20, scale: 0.9 }}
-                                  transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
-                                  className="flex items-center gap-3 mt-2 px-4 py-3 border-[2px] border-[var(--bauhaus-black)] bg-[var(--surface)]"
-                                >
-                                  <div className="w-8 h-8 bg-[var(--bauhaus-yellow)] flex items-center justify-center flex-shrink-0">
-                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                                      <path d="M3 1h5l4 4v8H3V1Z" stroke="var(--bauhaus-black)" strokeWidth="1.5"/>
-                                      <path d="M8 1v4h4" stroke="var(--bauhaus-black)" strokeWidth="1.5"/>
-                                    </svg>
-                                  </div>
-                                  <span className="text-sm truncate flex-1 text-left">{file.name}</span>
-                                  <button
-                                    onClick={() => removeMaterial(idx)}
-                                    className="text-[var(--bauhaus-red)] hover:opacity-70 transition-opacity cursor-pointer flex-shrink-0"
-                                  >
-                                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                                      <path d="M2 2l10 10M12 2l-10 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square"/>
-                                    </svg>
-                                  </button>
-                                </motion.div>
-                              ))}
-                            </AnimatePresence>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                              <Input placeholder="Describe your goal..." value={profile.customGoal} onChange={e => update('customGoal', e.target.value)} autoFocus />
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     </div>
                   </div>
                 )}
 
-                {/* Step: Goal Refinement (AI-guided) */}
-                {(existingUser ? contentStep === 2 : contentStep === 3) && (profile.goal || profile.customGoal) && (
-                  <div className="text-center">
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
-                      className="w-20 h-20 mx-auto mb-8 bg-[var(--bauhaus-blue)] flex items-center justify-center relative"
-                    >
-                      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                        <circle cx="16" cy="16" r="11" stroke="var(--bauhaus-white)" strokeWidth="2"/>
-                        <path d="M16 10v6l4 2" stroke="var(--bauhaus-white)" strokeWidth="2" strokeLinecap="square"/>
-                      </svg>
-                    </motion.div>
-                    <h2 className="type-h2 mb-3">TELL ME MORE</h2>
-                    <div className="p-[2px] rounded-[var(--radius-lg)] mb-6" style={{ background: 'var(--glass-border)' }}>
-                      <div className="rounded-[calc(var(--radius-lg)-2px)] p-5 text-left text-sm leading-relaxed"
-                        style={{ backgroundColor: 'var(--surface)', boxShadow: 'var(--shadow-inner)' }}>
-                        <p className="text-[var(--ink)]">
-                          {goalPrompts[profile.goal] || 'Tell me more about what you want to learn:'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <Input
-                        placeholder="Type your answer here..."
-                        value={profile.subGoal}
-                        onChange={e => update('subGoal', e.target.value)}
-                        autoFocus
-                      />
-                      <div className="flex items-center gap-2 justify-center">
-                        <button
-                          onClick={async () => {
-                            setLoadingSuggestions(true); setSuggestions([])
-                            try {
-                              const res = await api.suggestRefine(profile.customGoal || profile.goal)
-                              setSuggestions(res.suggestions || [])
-                            } catch {}
-                            setLoadingSuggestions(false)
-                          }}
-                          disabled={loadingSuggestions}
-                          className="px-4 py-2 text-xs font-bold uppercase tracking-widest border-2 border-[var(--bauhaus-black)]
-                            bg-[var(--bauhaus-white)] hover:bg-[var(--bauhaus-yellow)] transition-colors duration-200
-                            disabled:opacity-40 disabled:cursor-not-allowed"
-                        >
-                          {loadingSuggestions ? 'Thinking...' : 'AI Suggest'}
-                        </button>
-                        {suggestions.length > 0 && (
-                          <button
-                            onClick={() => { setSuggestions([]) }}
-                            className="text-xs text-[var(--ink-muted)] underline hover:text-[var(--ink)] transition-colors"
-                          >
-                            Clear
-                          </button>
-                        )}
-                      </div>
-                      {suggestions.length > 0 && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="space-y-2 pt-1"
-                        >
-                          {suggestions.map((s, i) => (
-                            <button
-                              key={i}
-                              onClick={() => { update('subGoal', s); setSuggestions([]) }}
-                              className="w-full text-left p-3 border-2 border-[var(--bauhaus-black)] text-sm leading-snug
-                                bg-[var(--bauhaus-white)] hover:bg-[var(--bauhaus-yellow)] transition-colors duration-200"
-                            >
-                              {s}
-                            </button>
-                          ))}
-                        </motion.div>
-                      )}
-                    </div>
-                  </div>
+                {/* Step: Goal Refinement (AI-guided conversational funnel) */}
+                {(existingUser ? contentStep === 1 : contentStep === 2) && (profile.goal || profile.customGoal) && (
+                  <RefineWizard
+                    goal={profile.customGoal || profile.goal}
+                    interests={profile.interests}
+                    onComplete={(result) => {
+                      update('subGoal', result.refinedGoal)
+                      if (result.curriculum) update('curriculum', result.curriculum)
+                      if (result.checklist) update('checklist', result.checklist)
+                      nextStep()
+                    }}
+                    onBack={() => setStep(s => s - 1)}
+                  />
                 )}
 
                 {/* Step: Timeframe (with custom option) */}
-                {(existingUser ? contentStep === 3 : contentStep === 4) && (
+                {(existingUser ? contentStep === 2 : contentStep === 3) && (
                   <div className="text-center">
                     <motion.div
                       initial={{ scale: 0, rotate: 180 }}
@@ -727,7 +572,7 @@ export default function Onboarding() {
                           className={`px-4 py-5 text-center transition-all duration-200 cursor-pointer border-[2px] border-[var(--bauhaus-black)]
                             ${profile.timeframe === t.value
                               ? 'bg-[var(--bauhaus-black)] text-[var(--bauhaus-white)]'
-                              : 'bg-[var(--bauhaus-white)] hover:bg-[var(--surface-alt)]'}`}
+                              : 'bg-[var(--surface)] hover:bg-[var(--surface-alt)]'}`}
                         >
                           <div className="text-2xl font-black mb-1">{t.label}</div>
                           <div className="text-xs font-bold uppercase tracking-wider">{t.value}</div>
@@ -742,7 +587,7 @@ export default function Onboarding() {
                       className={`w-full px-5 py-3 text-sm transition-all duration-200 cursor-pointer uppercase tracking-wider font-medium border-[2px] border-[var(--bauhaus-black)]
                         ${profile.timeframe === 'custom'
                           ? 'bg-[var(--bauhaus-black)] text-[var(--bauhaus-white)]'
-                          : 'bg-[var(--bauhaus-white)] text-[var(--ink)] hover:bg-[var(--surface-alt)]'}`}
+                          : 'bg-[var(--surface)] text-[var(--ink)] hover:bg-[var(--surface-alt)]'}`}
                     >
                       CUSTOM...
                     </motion.button>
@@ -763,7 +608,7 @@ export default function Onboarding() {
                 )}
 
                 {/* Step: Review */}
-                {(existingUser ? contentStep === 4 : contentStep === 5) && (
+                {(existingUser ? contentStep === 3 : contentStep === 4) && (
                   <div className="text-center">
                     <motion.div
                       initial={{ scale: 0 }}
@@ -827,14 +672,16 @@ export default function Onboarding() {
               transition={{ delay: 0.4, duration: 0.4 }}
               className="flex justify-between mt-10"
             >
-              {step > 0 ? (
+              {step > 0 && !(hasApiStep && step === 0) ? (
                 <Button variant="ghost" onClick={() => setStep(s => s - 1)}>
                   {'\u2190 BACK'}
                 </Button>
               ) : <div />}
-              <Button onClick={nextStep} disabled={!canProceed()}>
-                {step === lastStep ? 'BEGIN LEARNING' : 'CONTINUE \u2192'}
-              </Button>
+              {!(hasApiStep && step === 0) && (
+                <Button onClick={nextStep} disabled={!canProceed()}>
+                  {step === lastStep ? 'BEGIN LEARNING' : 'CONTINUE \u2192'}
+                </Button>
+              )}
             </motion.div>
 
             <AnimatePresence>

@@ -17,6 +17,7 @@ import ReactMarkdown from 'react-markdown'
 import rehypeRaw from 'rehype-raw'
 import remarkGfm from 'remark-gfm'
 import AmbientBackground from '../components/visuals/AmbientBackground'
+import DarkModeToggle from '../components/ui/DarkModeToggle'
 import { api } from '../lib/api'
 
 function formatTime(date) {
@@ -552,6 +553,7 @@ export default function Session() {
               <path d="M2 2l10 10M12 2l-10 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square"/>
             </svg>
           </motion.button>
+          <DarkModeToggle className="w-8 h-8 border-2 border-white/30" />
         </div>
       </div>
 
@@ -661,7 +663,7 @@ export default function Session() {
                     className={`${
                       msg.role === 'user'
                         ? 'chat-user-bubble bg-[var(--bauhaus-blue)] text-[var(--bauhaus-white)] rounded-t-[20px] rounded-bl-[20px] rounded-br-[4px]'
-                        : 'chat-ai-bubble bg-[var(--bauhaus-white)] text-[var(--ink)] border-[3px] border-[var(--bauhaus-red)] rounded-tl-[4px] rounded-tr-[20px] rounded-b-[20px]'
+                        : 'chat-ai-bubble bg-[var(--surface)] text-[var(--ink)] border-[3px] border-[var(--bauhaus-red)] rounded-tl-[4px] rounded-tr-[20px] rounded-b-[20px]'
                     }`}
                   >
                     <div className="px-5 py-3">
@@ -737,7 +739,7 @@ export default function Session() {
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask anything, learn everything..."
-                className="flex-1 px-4 py-3 bg-[var(--bauhaus-white)] border-[2px] border-[var(--bauhaus-black)] text-[var(--ink)] placeholder-[var(--ink-dim)] focus:outline-none text-sm transition-colors duration-200"
+                className="flex-1 px-4 py-3 bg-[var(--surface)] border-[2px] border-[var(--bauhaus-black)] text-[var(--ink)] placeholder-[var(--ink-dim)] focus:outline-none text-sm transition-colors duration-200"
                 disabled={sending}
               />
               <motion.button

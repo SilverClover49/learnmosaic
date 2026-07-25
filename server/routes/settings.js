@@ -23,7 +23,11 @@ router.get('/check', async (req, res) => {
       configured: !!(s.apiKey || s.aiProvider === 'ollama'),
       provider: s.aiProvider,
       hasGlobalKey: s._hasGlobalKey,
-      hasProfileKey: s._hasProfileKey
+      hasProfileKey: s._hasProfileKey,
+      hasDefaultKey: !!process.env.OPENROUTER_API_KEY,
+      defaultKeyMasked: process.env.OPENROUTER_API_KEY
+        ? process.env.OPENROUTER_API_KEY.slice(0, 4) + '••••' + process.env.OPENROUTER_API_KEY.slice(-4)
+        : ''
     })
   } catch {
     res.json({ configured: false })
@@ -49,6 +53,25 @@ router.put('/', async (req, res) => {
     }
 
     clearSettingsCache()
+    res.json({ success: true })
+  } catch (e) {
+    res.status(500).json({ error: e.message })
+  }
+})
+
+// POST /api/settings/use-default — activate the built-in env API key as global
+router.post('/use-default', async (req, res) => {
+  const defaultKey = process.env.OPENROUTER_API_KEY
+  if (!defaultKey) {
+    return res.status(400).json({ error: 'No default API key configured on this server.' })
+  }
+  try {
+    await saveGlobalSettings({
+      aiProvider: 'opencode',
+      aiModel: 'mimo-v2.5-free',
+      apiKey: defaultKey,
+      baseUrl: ''
+    })
     res.json({ success: true })
   } catch (e) {
     res.status(500).json({ error: e.message })

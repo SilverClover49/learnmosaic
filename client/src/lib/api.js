@@ -22,7 +22,7 @@ export const api = {
   deleteAccount: (id) => req(`/users/${id}`, { method: 'DELETE' }),
 
   // Sessions
-  listSessions: () => req('/sessions'),
+  listSessions: (profileId) => req(`/sessions${profileId ? `?profileId=${profileId}` : ''}`),
   getSession: (id) => req(`/sessions/${id}`),
   createSession: (data) => req('/sessions', { method: 'POST', body: JSON.stringify(data) }),
   completeSession: (id) => req(`/sessions/${id}/complete`, { method: 'POST' }),
@@ -95,5 +95,6 @@ export const api = {
   getSettings: () => req('/settings'),
   saveSettings: (data) => req('/settings', { method: 'PUT', body: JSON.stringify(data) }),
   checkApi: () => req('/settings/check'),
+  useDefaultApiKey: () => req('/settings/use-default', { method: 'POST' }),
 
 }

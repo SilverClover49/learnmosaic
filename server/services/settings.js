@@ -24,8 +24,8 @@ export async function getSettings() {
     const globalKey = global?.apiKey || ''
 
     _cached = {
-      aiProvider: profile.aiProvider || global?.aiProvider || 'openrouter',
-      aiModel: profile.aiModel || global?.aiModel || 'openai/gpt-4o-mini',
+      aiProvider: profile.aiProvider || global?.aiProvider || 'opencode',
+      aiModel: profile.aiModel || global?.aiModel || 'mimo-v2.5-free',
       apiKey: profileKey || globalKey || process.env.OPENROUTER_API_KEY || '',
       baseUrl: profile.baseUrl || global?.baseUrl || '',
       // Metadata (not sent to client)
@@ -36,8 +36,8 @@ export async function getSettings() {
     }
   } catch {
     _cached = {
-      aiProvider: process.env.AI_PROVIDER || 'openrouter',
-      aiModel: process.env.AI_MODEL || 'openai/gpt-4o-mini',
+      aiProvider: process.env.AI_PROVIDER || 'opencode',
+      aiModel: process.env.OPENCODE_MODEL || process.env.AI_MODEL || 'mimo-v2.5-free',
       apiKey: process.env.OPENROUTER_API_KEY || '',
       baseUrl: '',
       _hasGlobalKey: false,
