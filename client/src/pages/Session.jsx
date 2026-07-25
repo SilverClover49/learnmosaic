@@ -249,22 +249,7 @@ export default function Session() {
     try {
       await api.completeSession(id)
       setSession(prev => ({ ...prev, status: 'completed' }))
-      toast({
-        message: 'Session completed!',
-        duration: 12000,
-        action: {
-          label: 'Undo',
-          onClick: async () => {
-            try {
-              await api.undoComplete(id)
-              setSession(prev => ({ ...prev, status: 'active' }))
-              toast({ message: 'Session restored!', duration: 3000 })
-            } catch {
-              toast({ message: 'Undo window expired (60s)', duration: 4000 })
-            }
-          }
-        }
-      })
+      navigate(`/session/${id}/credits`)
     } catch {}
   }
 
@@ -470,7 +455,7 @@ export default function Session() {
           </>
         }
       >
-        <p>You'll see your end-credits summary. You can undo this within 60 seconds.</p>
+        <p>You'll see your end-credits summary. You can undo this within 90 seconds.</p>
       </Modal>
 
       <Modal

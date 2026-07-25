@@ -204,10 +204,13 @@ router.get('/:id/credits', async (req, res) => {
     const meta = await pb.getSession(req.params.id)
     if (!meta) return res.status(404).json({ error: 'Session not found' })
     const milestones = await pb.getMilestones(req.params.id)
+    const messages = await pb.getMessages(req.params.id)
+    const chatCount = messages.filter(m => m.role === 'user').length
     res.json({
       name: meta.name, goal: meta.goal,
       createdAt: meta.created, completedAt: meta.completedAt || null,
       status: meta.status, milestones,
+      chatCount,
       curriculum: (meta.curriculum || '').slice(0, 500),
       board: (meta.thinkingBoard || '').slice(0, 500),
       reviewCards: meta.reviewCards || ''
@@ -245,14 +248,14 @@ router.delete('/:id', async (req, res) => {
   }
 })
 
-// Undo complete (within 60 seconds)
+// Undo complete (within 90 seconds)
 router.post('/:id/undo-complete', async (req, res) => {
   try {
     const meta = await pb.getSession(req.params.id)
     if (!meta) return res.status(404).json({ error: 'Session not found' })
     if (meta.status !== 'completed') return res.status(400).json({ error: 'Session is not completed' })
     const elapsed = Date.now() - new Date(meta.completedAt).getTime()
-    if (elapsed > 60000) return res.status(400).json({ error: 'Undo window expired (60s)' })
+    if (elapsed > 90000) return res.status(400).json({ error: 'Undo window expired (90s)' })
     await pb.updateSession(req.params.id, { status: 'active', completedAt: null })
     await pb.addMilestone({ sessionId: req.params.id, type: 'session_undo', description: 'Undid session completion' })
     res.json({ success: true })

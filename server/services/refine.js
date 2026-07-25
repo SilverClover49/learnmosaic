@@ -3,49 +3,55 @@ import { getSettings } from './settings.js'
 
 const sessions = new Map()
 
-const TOPICS = ['Web Development', 'Mobile Apps', 'Data Science', 'Game Development', 'AI / Machine Learning', 'Cybersecurity', 'Cloud Computing', 'DevOps', 'Other (type your own)']
-const LEVELS = ['Complete Beginner', 'Some Basics', 'Intermediate', 'Advanced']
-const STYLES = ['Hands-on Projects', 'Video Tutorials', 'Reading / Docs', 'Interactive Exercises', 'Mix of Everything']
-
-function generateOptions(topic) {
-  const map = {
-    'Web Development': ['Frontend (HTML/CSS/JS)', 'Backend (Node/Python)', 'Full Stack', 'React / Vue / Angular', 'Other (type your own)'],
-    'Mobile Apps': ['iOS (Swift)', 'Android (Kotlin)', 'Cross-Platform (React Native/Flutter)', 'Other (type your own)'],
-    'Data Science': ['Python & Pandas', 'SQL & Databases', 'Machine Learning', 'Data Visualization', 'Other (type your own)'],
-    'Game Development': ['Unity (C#)', 'Unreal (C++)', 'Godot', 'Web Games', 'Other (type your own)'],
-    'AI / Machine Learning': ['LLMs & Prompt Engineering', 'Deep Learning', 'Computer Vision', 'NLP', 'Other (type your own)'],
-    'Cybersecurity': ['Ethical Hacking', 'Network Security', 'Cryptography', 'Security Auditing', 'Other (type your own)'],
-    'Cloud Computing': ['AWS', 'Azure', 'Google Cloud', 'Docker / Kubernetes', 'Other (type your own)'],
-    'DevOps': ['CI/CD Pipelines', 'Infrastructure as Code', 'Monitoring & Logging', 'Git & Version Control', 'Other (type your own)']
+const STRUCTURED_QUESTIONS = [
+  {
+    dimension: 'area',
+    question: (goal) => `What area of "${goal}" would you like to focus on?`,
+    options: (goal, interests, history) => {
+      const g = (history[0]?.a || goal || '').toLowerCase()
+      if (g.includes('web') || g.includes('website') || g.includes('frontend') || g.includes('backend'))
+        return ['Frontend Development', 'Backend Development', 'Full Stack', 'Web Design / UX', 'Other (type your own)']
+      if (g.includes('mobile') || g.includes('app') || g.includes('ios') || g.includes('android'))
+        return ['iOS (Swift)', 'Android (Kotlin)', 'Cross-Platform (Flutter/React Native)', 'Mobile Web (PWA)', 'Other (type your own)']
+      if (g.includes('data') || g.includes('machine learning') || g.includes('ai'))
+        return ['Data Analysis', 'Machine Learning', 'Deep Learning', 'Data Engineering', 'Other (type your own)']
+      if (g.includes('game'))
+        return ['Unity (C#)', 'Unreal Engine (C++)', 'Godot', 'Web Games', 'Other (type your own)']
+      return ['Web Development', 'Mobile Apps', 'Data Science / AI', 'Game Development', 'Other (type your own)']
+    },
+    aiOptions: true
+  },
+  {
+    dimension: 'experience',
+    question: () => 'What is your experience level with this?',
+    options: () => ['Complete Beginner', 'Some Basics', 'Intermediate', 'Advanced']
+  },
+  {
+    dimension: 'style',
+    question: () => 'How do you prefer to learn?',
+    options: () => ['Hands-on Projects', 'Video Tutorials', 'Reading / Docs', 'Interactive Exercises', 'Mix of Everything']
+  },
+  {
+    dimension: 'pace',
+    question: () => 'How would you like to pace yourself?',
+    options: () => ['Intensive (daily)', 'Moderate (few times/week)', 'Flexible (when I can)', 'Other (type your own)']
   }
-  return map[topic] || ['General', 'Specialized', 'Practical Focus', 'Theory Focus', 'Other (type your own)']
-}
+]
 
-function buildSystemPrompt(goal, interests, history) {
-  const context = history.map(h => `Q: ${h.q}\nA: ${h.a}`).join('\n')
-  const interestsText = interests?.length ? `\nStudent's interests: ${interests.join(', ')}` : ''
-  return `You are a learning advisor helping a student refine their goal: "${goal}"${interestsText}
+function buildCurriculumPrompt(goal, interests, history) {
+  const context = history.map(h => `Q: ${h.q}\nAnswer: ${h.a}`).join('\n')
+  return `Based on this student's profile, generate a personalized 4-week curriculum.
 
-${context ? `Conversation so far:\n${context}\n\n` : ''}Based on what you know, ask ONE focused question to narrow down their goal. Use the student's interests to personalize questions. Choose from the following dimensions in order:
-1. What broad area? (only if not yet specified — prefer suggesting areas related to their interests)
-2. What specific sub-field? (only after area is known)
-3. What experience level?
-4. What learning style?
+Student goal: ${goal}
+Interests: ${interests?.join(', ') || 'Not specified'}
+Conversation:
+${context}
 
 Output JSON:
 {
-  "question": "the question text",
-  "options": ["Option 1", "Option 2", "Option 3", "Option 4", "Other (type your own)"],
-  "step": 1,
-  "totalSteps": 4,
-  "complete": false
-}
-
-When you have enough info (after ~3-4 rounds), output:
-{
-  "complete": true,
-  "refinedGoal": "a precise goal combining all answers",
-  "curriculum": "A 4-point curriculum plan with milestones"
+  "refinedGoal": "A precise 1-sentence goal combining all their answers",
+  "curriculum": "Week 1: ...\nWeek 2: ...\nWeek 3: ...\nWeek 4: ...",
+  "checklist": "- [ ] Task 1\n- [ ] Task 2\n- [ ] Task 3\n- [ ] Task 4\n- [ ] Task 5"
 }`
 }
 
@@ -55,30 +61,27 @@ export async function startRefinement(goal, interests) {
   }
 
   const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
-  const settings = await getSettings()
-  const history = []
+  const q = STRUCTURED_QUESTIONS[0]
 
-  const result = await callAI({
-    system: buildSystemPrompt(goal, interests, history),
-    messages: [{ role: 'user', content: `Help me refine my goal: ${goal}${interests?.length ? `\nMy interests: ${interests.join(', ')}` : ''}` }],
-    settings
+  const questionText = q.question(goal, interests)
+  const optionsList = q.options(goal, interests, [])
+
+  sessions.set(id, {
+    goal,
+    interests,
+    history: [],
+    step: 1,
+    totalSteps: STRUCTURED_QUESTIONS.length
   })
 
-  let parsed
-  try {
-    parsed = JSON.parse(result.content)
-  } catch {
-    parsed = {
-      question: 'What area are you most interested in?',
-      options: TOPICS,
-      step: 1,
-      totalSteps: 4,
-      complete: false
-    }
+  return {
+    sessionId: id,
+    question: questionText,
+    options: optionsList,
+    step: 1,
+    totalSteps: STRUCTURED_QUESTIONS.length,
+    complete: false
   }
-
-  sessions.set(id, { goal, interests, history, step: 1 })
-  return { sessionId: id, question: parsed.question, options: parsed.options || TOPICS, step: 1, totalSteps: 4, complete: false }
 }
 
 export async function answerRefinement(sessionId, answer) {
@@ -88,32 +91,29 @@ export async function answerRefinement(sessionId, answer) {
   const settings = await getSettings()
 
   if (answer === '__back__') {
-    session.history.pop()
-    session.step = Math.max(1, session.step - 1)
-  } else {
-    const lastQuestion = session.history.length > 0
-      ? session.history[session.history.length - 1].q
-      : 'What area are you most interested in?'
-    session.history.push({ q: lastQuestion, a: answer })
+    if (session.history.length > 0) {
+      session.history.pop()
+      session.step = Math.max(1, session.step - 1)
+    }
+    const q = STRUCTURED_QUESTIONS[Math.max(0, session.step - 1)]
+    return {
+      sessionId,
+      question: q.question(session.goal, session.interests),
+      options: q.options(session.goal, session.interests, session.history),
+      step: session.step,
+      totalSteps: session.totalSteps,
+      complete: false
+    }
   }
 
-  if (session.step >= 4) {
-    const context = session.history.map(h => `${h.q}\nAnswer: ${h.a}`).join('\n')
-    const curriculumPrompt = `Based on this student's profile, generate a personalized 4-week curriculum.
+  const lastQuestion = session.history.length > 0
+    ? session.history[session.history.length - 1].q
+    : STRUCTURED_QUESTIONS[0].question(session.goal, session.interests)
 
-Student goal: ${session.goal}
-Interests: ${session.interests?.join(', ') || 'Not specified'}
-Details:
-${context}
+  session.history.push({ q: lastQuestion, a: answer })
 
-Output JSON:
-{
-  "refinedGoal": "A precise 1-sentence goal",
-  "curriculum": "Week 1: ...\nWeek 2: ...\nWeek 3: ...\nWeek 4: ...",
-  "checklist": "- [ ] Task 1\n- [ ] Task 2\n- [ ] Task 3\n- [ ] Task 4\n- [ ] Task 5"
-}`
-
-    let parsed = {
+  if (session.step >= session.totalSteps) {
+    const fallback = {
       refinedGoal: session.history.map(h => h.a).join(' - '),
       curriculum: 'Week 1: Foundations\nWeek 2: Core Concepts\nWeek 3: Practice\nWeek 4: Project',
       checklist: '- [ ] Complete Week 1\n- [ ] Complete Week 2\n- [ ] Complete Week 3\n- [ ] Complete Week 4'
@@ -121,92 +121,52 @@ Output JSON:
 
     try {
       const result = await callAI({
-        system: 'You are a curriculum designer. Create detailed, actionable learning plans.',
-        messages: [{ role: 'user', content: curriculumPrompt }],
+        system: 'You are a curriculum designer. Create detailed, actionable learning plans. Output only valid JSON.',
+        messages: [{ role: 'user', content: buildCurriculumPrompt(session.goal, session.interests, session.history) }],
         settings
       })
-      parsed = JSON.parse(result.content)
+      const parsed = JSON.parse(result.content)
+      fallback.refinedGoal = parsed.refinedGoal || fallback.refinedGoal
+      fallback.curriculum = parsed.curriculum || fallback.curriculum
+      fallback.checklist = parsed.checklist || fallback.checklist
     } catch (e) {
       console.error('Curriculum generation failed, using fallback:', e.message)
     }
 
     sessions.delete(sessionId)
-    return { complete: true, refinedGoal: parsed.refinedGoal, curriculum: parsed.curriculum, checklist: parsed.checklist }
+    return { complete: true, ...fallback }
   }
 
-  let parsed
-  try {
-    const result = await callAI({
-      system: buildSystemPrompt(session.goal, session.interests, session.history),
-      messages: [{ role: 'user', content: `Student's goal: ${session.goal}\n\nContinue refining.` }],
-      settings
-    })
-    parsed = JSON.parse(result.content)
-  } catch (e) {
-    console.error('Refinement question generation failed:', e.message)
-    const dimension = session.step === 2 ? 'experience level' : 'learning style'
-    const opts = session.step === 2 ? LEVELS : STYLES
-    parsed = {
-      question: `What's your ${dimension}?`,
-      options: opts,
-      step: session.step,
-      totalSteps: 4,
-      complete: false
-    }
-  }
+  const nextStep = session.step
+  const q = STRUCTURED_QUESTIONS[nextStep]
 
-  if (parsed.complete) {
-    session.step = 4
-    const context = session.history.map(h => `${h.q}\nAnswer: ${h.a}`).join('\n')
-    const curriculumPrompt = `Based on this student's profile, generate a personalized 4-week curriculum.
+  let questionText = q.question(session.goal, session.interests)
+  let optionsList = q.options(session.goal, session.interests, session.history)
 
-Student goal: ${session.goal}
-Interests: ${session.interests?.join(', ') || 'Not specified'}
-Details:
-${context}
-
-Output JSON:
-{
-  "refinedGoal": "A precise 1-sentence goal",
-  "curriculum": "Week 1: ...\nWeek 2: ...\nWeek 3: ...\nWeek 4: ...",
-  "checklist": "- [ ] Task 1\n- [ ] Task 2\n- [ ] Task 3\n- [ ] Task 4\n- [ ] Task 5"
-}`
-
-    let curParsed = {
-      refinedGoal: session.history.map(h => h.a).join(' - '),
-      curriculum: 'Week 1: Foundations\nWeek 2: Core Concepts\nWeek 3: Practice\nWeek 4: Project',
-      checklist: '- [ ] Complete Week 1\n- [ ] Complete Week 2\n- [ ] Complete Week 3\n- [ ] Complete Week 4'
-    }
-
+  if (q.aiOptions) {
     try {
-      const curResult = await callAI({
-        system: 'You are a curriculum designer. Create detailed, actionable learning plans.',
-        messages: [{ role: 'user', content: curriculumPrompt }],
+      const result = await callAI({
+        system: `You are a learning advisor. Given the student's goal "${session.goal}" and interests [${(session.interests || []).join(', ')}], suggest 4 relevant learning area options. Output JSON: {"options": ["option1", "option2", "option3", "option4"]}`,
+        messages: [{ role: 'user', content: `Goal: ${session.goal}\nInterests: ${(session.interests || []).join(', ')}\nSuggest 4 focused area options.` }],
         settings
       })
-      curParsed = JSON.parse(curResult.content)
+      const parsed = JSON.parse(result.content)
+      if (parsed.options && parsed.options.length >= 3) {
+        optionsList = [...parsed.options.slice(0, 4), 'Other (type your own)']
+      }
     } catch (e) {
-      console.error('Curriculum generation failed (path 2), using fallback:', e.message)
-    }
-
-    sessions.delete(sessionId)
-    return {
-      complete: true,
-      refinedGoal: curParsed.refinedGoal || session.goal,
-      curriculum: curParsed.curriculum,
-      checklist: curParsed.checklist
+      console.error('AI option generation failed, using defaults:', e.message)
     }
   }
 
   session.step++
-  session.history[session.history.length - 1].asked = 'new'
 
   return {
     sessionId,
-    question: parsed.question,
-    options: parsed.options,
+    question: questionText,
+    options: optionsList,
     step: session.step,
-    totalSteps: 4,
+    totalSteps: session.totalSteps,
     complete: false
   }
 }

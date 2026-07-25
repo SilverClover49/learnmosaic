@@ -127,7 +127,7 @@ export default function Landing() {
 
           {/* CTA */}
           <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-4">
-            <Button size="lg" onClick={() => navigate('/onboarding')}>
+            <Button size="lg" onClick={() => { localStorage.removeItem('learnmosaic-user'); navigate('/onboarding') }}>
               START
             </Button>
             {users.length > 0 && (

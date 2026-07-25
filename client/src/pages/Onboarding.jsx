@@ -534,10 +534,13 @@ export default function Onboarding() {
                     goal={profile.customGoal || profile.goal}
                     interests={profile.interests}
                     onComplete={(result) => {
-                      update('subGoal', result.refinedGoal)
-                      if (result.curriculum) update('curriculum', result.curriculum)
-                      if (result.checklist) update('checklist', result.checklist)
-                      nextStep()
+                      setProfile(prev => ({
+                        ...prev,
+                        subGoal: result.refinedGoal || prev.subGoal,
+                        curriculum: result.curriculum || prev.curriculum,
+                        checklist: result.checklist || prev.checklist,
+                      }))
+                      setStep(s => s + 1)
                     }}
                     onBack={() => setStep(s => s - 1)}
                   />
@@ -666,23 +669,26 @@ export default function Onboarding() {
               </motion.div>
             </AnimatePresence>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.4 }}
-              className="flex justify-between mt-10"
-            >
-              {step > 0 && !(hasApiStep && step === 0) ? (
-                <Button variant="ghost" onClick={() => setStep(s => s - 1)}>
-                  {'\u2190 BACK'}
-                </Button>
-              ) : <div />}
-              {!(hasApiStep && step === 0) && (
-                <Button onClick={nextStep} disabled={!canProceed()}>
-                  {step === lastStep ? 'BEGIN LEARNING' : 'CONTINUE \u2192'}
-                </Button>
-              )}
-            </motion.div>
+            {/* Hide parent nav during RefineWizard (it manages its own navigation) */}
+            {!((existingUser ? contentStep === 1 : contentStep === 2) && (profile.goal || profile.customGoal)) && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4, duration: 0.4 }}
+                className="flex justify-between mt-10"
+              >
+                {step > 0 && !(hasApiStep && step === 0) ? (
+                  <Button variant="ghost" onClick={() => setStep(s => s - 1)}>
+                    {'\u2190 BACK'}
+                  </Button>
+                ) : <div />}
+                {!(hasApiStep && step === 0) && (
+                  <Button onClick={nextStep} disabled={!canProceed()}>
+                    {step === lastStep ? 'BEGIN LEARNING' : 'CONTINUE \u2192'}
+                  </Button>
+                )}
+              </motion.div>
+            )}
 
             <AnimatePresence>
               {error && (

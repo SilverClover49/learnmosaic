@@ -17,7 +17,7 @@ export default function RefineWizard({ goal, interests, onComplete, onBack }) {
   const [question, setQuestion] = useState('')
   const [options, setOptions] = useState([])
   const [step, setStep] = useState(0)
-  const [totalSteps, setTotalSteps] = useState(3)
+  const [totalSteps, setTotalSteps] = useState(4)
   const [loading, setLoading] = useState(true)
   const [loadingMsg, setLoadingMsg] = useState('Asking the AI...')
   const [customMode, setCustomMode] = useState(false)
@@ -67,6 +67,7 @@ export default function RefineWizard({ goal, interests, onComplete, onBack }) {
       setHistory(prev => [...prev, { question, answer }])
 
       if (data.complete) {
+        setLoadingMsg('Building your curriculum...')
         onComplete({
           refinedGoal: data.refinedGoal || goal,
           curriculum: data.curriculum,
@@ -231,11 +232,32 @@ export default function RefineWizard({ goal, interests, onComplete, onBack }) {
           className="mt-8"
         >
           <button
-            onClick={() => {
+            onClick={async () => {
               const prev = history[history.length - 1]
               setHistory(h => h.slice(0, -1))
-              setQuestion(prev.question)
-              setStep(s => s - 1)
+              setLoading(true)
+              setLoadingMsg('Going back...')
+              try {
+                const res = await fetch('/api/sessions/refine/answer', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ sessionId, answer: '__back__' })
+                })
+                if (res.ok) {
+                  const data = await res.json()
+                  setQuestion(data.question)
+                  setOptions(data.options || [])
+                  setStep(data.step || step - 1)
+                  setTotalSteps(data.totalSteps || totalSteps)
+                } else {
+                  setQuestion(prev.question)
+                  setStep(s => s - 1)
+                }
+              } catch {
+                setQuestion(prev.question)
+                setStep(s => s - 1)
+              }
+              setLoading(false)
             }}
             className="text-xs text-[var(--ink-muted)] hover:text-[var(--ink)] transition-colors uppercase tracking-wider cursor-pointer"
           >
