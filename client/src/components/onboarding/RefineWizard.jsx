@@ -60,7 +60,7 @@ export default function RefineWizard({ goal, interests, onComplete, onBack }) {
       const res = await fetch('/api/sessions/refine/answer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, answer })
+        body: JSON.stringify({ sessionId, answer, history })
       })
       if (!res.ok) throw new Error(await res.text())
       const data = await res.json()
