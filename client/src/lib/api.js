@@ -1,4 +1,4 @@
-const BASE = '/api'
+const BASE = import.meta.env.PROD ? 'https://learnmosaic-api.onrender.com/api' : '/api'
 
 async function req(path, options = {}) {
   const res = await fetch(`${BASE}${path}`, {
