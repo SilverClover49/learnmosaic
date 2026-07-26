@@ -218,7 +218,7 @@ export default function Onboarding() {
 
       setLoadingMsg('Designing your curriculum...'); setLoadingProgress(35)
       const session = await api.createSession({
-        userId: user.id, name: existingUser ? 'Learning Session' : profile.name,
+                    user_id: user.id, name: existingUser ? 'Learning Session' : profile.name,
         age: existingUser ? existingUser.age : parseInt(profile.age),
         interests: allInterests, goal: finalGoal,
         subGoal: profile.subGoal,
